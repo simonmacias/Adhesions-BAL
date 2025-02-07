@@ -43,7 +43,7 @@
                 <header class="bg-primary text-white py-3">
                     <div class="container d-flex justify-content-between align-items-center">
                         <h1 class="h3 mb-0">Gestion des Adhérents</h1>
-                        <span class="text-light small">v4.0.11</span>
+                        <span class="text-light small">v4.0.12</span>
                     </div>
                 </header>
 
@@ -605,7 +605,6 @@
     
     <!-- Notre application -->
     <script type="module">
-        import config from './config.js';
         // Configuration Supabase
         const supabaseUrl = 'https://wetwafvvzwqtjmtfzmap.supabase.co'
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndldHdhZnZ2endxdGptdGZ6bWFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg2ODM1NjEsImV4cCI6MjA1NDI1OTU2MX0.fuUDGoJgOIoAiaOyof1hCIEQpkmCJfm2Vt2KAkAg3Iw'
@@ -743,13 +742,19 @@
 
             // Récupérer le hash d'authentification
             async getAuthHash() {
-                const { data, error } = await supabaseClient
-                    .from('users')
-                    .select('auth_hash')
-                    .single()
-                
-                if (error) throw error
-                return data.auth_hash
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('config')
+                        .select('value')
+                        .eq('key', 'auth_hash')
+                        .single()
+                    
+                    if (error) throw error
+                    return data?.value || null
+                } catch (error) {
+                    console.error('Erreur lors de la récupération du hash:', error)
+                    return null
+                }
             }
         }
         
