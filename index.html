@@ -645,12 +645,19 @@
                 }
             },
             mounted() {
+                // Vérifier si déjà authentifié dans cette session
                 this.isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true';
                 
+                // Si non authentifié, afficher le modal
                 if (!this.isAuthenticated) {
+                    // Réinitialiser les valeurs
+                    this.password = '';
+                    this.authError = false;
+                    // Initialiser et afficher le modal
                     this.authModal = new bootstrap.Modal(document.getElementById('authModal'));
                     this.authModal.show();
                 } else {
+                    // Si authentifié, charger les données
                     this.loadData();
                 }
             }
