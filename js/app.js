@@ -13,7 +13,11 @@ const app = createApp({
                 { label: 'Taux renouvellement', value: '0%' }
             ],
             currentMember: null,
-            modalInstance: null
+            modalInstance: null,
+            formErrors: [],
+            searchResults: [],
+            similarMembers: [],
+            villeSearch: ''
         }
     },
     methods: {
@@ -119,22 +123,32 @@ const app = createApp({
 
         // Gestion des membres
         showAddModal() {
+            // Réinitialiser les erreurs et les résultats de recherche
+            this.formErrors = [];
+            this.searchResults = [];
+            this.similarMembers = [];
+            
             this.currentMember = {
-                id: Date.now(),
+                id: null,
                 nom: '',
                 prenom: '',
                 email: '',
-                dateAdhesion: new Date().toISOString().split('T')[0],
-                cotisationAJour: true,
-                ville: '',
-                dateNaissance: '',
-                telephone: '',
+                datenaissance: new Date().getFullYear() - 20,
                 genre: '',
+                ville: '',
+                code_postal: '',
+                coordinates: null,
+                telephone: '',
+                dateadhesion: new Date().toISOString().split('T')[0],
+                formuleadhesion: "J'adhère",
+                montantcotisation: 5,
                 enfants: 0,
+                cotisationAJour: true,
                 historique: []
-            }
-            this.modalInstance = new bootstrap.Modal(document.getElementById('memberModal'))
-            this.modalInstance.show()
+            };
+            this.villeSearch = '';
+            this.modalInstance = new bootstrap.Modal(document.getElementById('memberModal'));
+            this.modalInstance.show();
         },
 
         editMember(member) {
@@ -182,6 +196,45 @@ const app = createApp({
             this.statistics[1].value = upToDate
             this.statistics[2].value = newMembers
             this.statistics[3].value = `${renewalRate}%`
+        },
+
+        // Normalisation des noms et prénoms
+        normalizeString(str) {
+            if (!str) return '';
+            return str.toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '') // Supprime les accents
+                .replace(/[^a-z0-9]/g, ''); // Garde uniquement les lettres et chiffres
+        },
+
+        // Vérifie si un membre existe déjà
+        checkExistingMember(nom, prenom) {
+            const normalizedNom = this.normalizeString(nom);
+            const normalizedPrenom = this.normalizeString(prenom);
+            
+            return this.members.find(member => 
+                this.normalizeString(member.nom) === normalizedNom &&
+                this.normalizeString(member.prenom) === normalizedPrenom
+            );
+        },
+
+        // Mise à jour du nom/prénom avec vérification des doublons
+        async onMemberInfoChange() {
+            if (this.currentMember.nom && this.currentMember.prenom) {
+                const existingMember = this.checkExistingMember(
+                    this.currentMember.nom,
+                    this.currentMember.prenom
+                );
+                
+                if (existingMember && (!this.currentMember.id || existingMember.id !== this.currentMember.id)) {
+                    // Membre trouvé, on passe en mode édition
+                    this.currentMember = { ...existingMember };
+                    this.villeSearch = existingMember.ville && existingMember.code_postal 
+                        ? `${existingMember.ville} (${existingMember.code_postal})`
+                        : '';
+                    alert('Un membre avec ce nom et prénom existe déjà. Le profil a été chargé en mode édition.');
+                }
+            }
         }
     },
     mounted() {

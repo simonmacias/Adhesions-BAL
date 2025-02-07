@@ -330,27 +330,25 @@
                                     <!-- Informations personnelles -->
                                     <div class="col-md-6">
                                         <label class="form-label">Nom *</label>
-                                        <div class="position-relative">
-                                            <input type="text" 
-                                                   class="form-control" 
-                                                   :class="{ 'is-invalid': formErrors.includes('Le nom est obligatoire') }"
-                                                   v-model="currentMember.nom"
-                                                   @input="handleNomInput"
-                                                   @blur="formatNomPrenom">
-                                            <div v-if="searchResults.length" 
-                                                 class="position-absolute w-100 mt-1 bg-white border rounded shadow-sm" 
-                                                 style="z-index: 1000; max-height: 200px; overflow-y: auto;">
-                                                    <div v-for="result in searchResults" 
-                                                         :key="result.id"
-                                                         class="dropdown-item py-2 px-3 cursor-pointer"
-                                                         @click="selectMember(result)"
-                                                         style="cursor: pointer;">
-                                                        <strong>{{ result.nom }} {{ result.prenom }}</strong>
-                                                        <br>
-                                                        <small class="text-muted">{{ result.email }}</small>
-                                                    </div>
+                                        <input type="text" 
+                                               class="form-control"
+                                               :class="{ 'is-invalid': formErrors.includes('Le nom est obligatoire') }"
+                                               v-model="currentMember.nom"
+                                               @input="onMemberInfoChange"
+                                               @blur="currentMember.nom = currentMember.nom.toUpperCase()">
+                                        <div v-if="searchResults.length" 
+                                             class="position-absolute w-100 mt-1 bg-white border rounded shadow-sm" 
+                                             style="z-index: 1000; max-height: 200px; overflow-y: auto;">
+                                                <div v-for="result in searchResults" 
+                                                     :key="result.id"
+                                                     class="dropdown-item py-2 px-3 cursor-pointer"
+                                                     @click="selectMember(result)"
+                                                     style="cursor: pointer;">
+                                                    <strong>{{ result.nom }} {{ result.prenom }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ result.email }}</small>
                                                 </div>
-                                        </div>
+                                            </div>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Prénom *</label>
@@ -358,7 +356,21 @@
                                                class="form-control"
                                                :class="{ 'is-invalid': formErrors.includes('Le prénom est obligatoire') }"
                                                v-model="currentMember.prenom"
-                                               @blur="formatNomPrenom">
+                                               @input="onMemberInfoChange"
+                                               @blur="currentMember.prenom = currentMember.prenom.charAt(0).toUpperCase() + currentMember.prenom.slice(1).toLowerCase()">
+                                        <div v-if="searchResults.length" 
+                                             class="position-absolute w-100 mt-1 bg-white border rounded shadow-sm" 
+                                             style="z-index: 1000; max-height: 200px; overflow-y: auto;">
+                                                <div v-for="result in searchResults" 
+                                                     :key="result.id"
+                                                     class="dropdown-item py-2 px-3 cursor-pointer"
+                                                     @click="selectMember(result)"
+                                                     style="cursor: pointer;">
+                                                    <strong>{{ result.nom }} {{ result.prenom }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ result.email }}</small>
+                                                </div>
+                                            </div>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Année de naissance</label>
@@ -2001,6 +2013,10 @@
                     } else {
                         this.authError = true;
                     }
+                },
+                onMemberInfoChange() {
+                    // Add any additional logic you want to execute when member info changes
+                    console.log('Member info changed:', this.currentMember);
                 }
             }
         })
