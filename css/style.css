@@ -59,4 +59,26 @@ body {
     .table-responsive {
         border-radius: 8px;
     }
+}
+
+[v-cloak] {
+    display: none;
+}
+
+.auth-modal {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.auth-modal .modal-header {
+    background-color: var(--primary-color);
+    color: white;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.auth-modal .form-control:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
 } 
