@@ -1,8 +1,8 @@
 # Fichiers de données sensibles
 *.csv
 adherents_*.json
-!adherents_2025_complet.json
 test_*.json
+!version.json
 
 # Fichiers de configuration
 .env
