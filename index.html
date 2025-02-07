@@ -1102,9 +1102,8 @@
                         // Vérification des doublons
                         const newMembers = jsonData.filter(member => {
                             const isDuplicate = this.members.some(existing => 
-                                existing.nom?.toLowerCase() === member.nom?.toLowerCase() &&
-                                existing.prenom?.toLowerCase() === member.prenom?.toLowerCase() &&
-                                existing.datenaissance === member.datenaissance
+                                this.normalizeString(existing.nom) === this.normalizeString(member.nom) &&
+                                this.normalizeString(existing.prenom) === this.normalizeString(member.prenom)
                             );
                             return !isDuplicate;
                         });
@@ -1162,13 +1161,8 @@
 
                                     // Rechercher un membre existant
                                     const existingMember = this.members.find(existing => 
-                                        existing.nom?.toLowerCase() === importedMember.nom?.toLowerCase() &&
-                                        existing.prenom?.toLowerCase() === importedMember.prenom?.toLowerCase() &&
-                                        (
-                                            existing.email?.toLowerCase() === importedMember.email?.toLowerCase() ||
-                                            existing.telephone === importedMember.telephone ||
-                                            existing.datenaissance === importedMember.datenaissance
-                                        )
+                                        this.normalizeString(existing.nom) === this.normalizeString(importedMember.nom) &&
+                                        this.normalizeString(existing.prenom) === this.normalizeString(importedMember.prenom)
                                     );
 
                                     if (existingMember) {
@@ -2017,6 +2011,12 @@
                 onMemberInfoChange() {
                     // Add any additional logic you want to execute when member info changes
                     console.log('Member info changed:', this.currentMember);
+                },
+                normalizeString(str) {
+                    return str.normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g, '')
+                        .toLowerCase()
+                        .replace(/[^a-z]/g, '');
                 }
             }
         })
