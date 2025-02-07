@@ -207,8 +207,7 @@ const app = createApp({
                 .normalize('NFD')
                 .replace(/[\u0300-\u036f]/g, '') // Supprime les accents
                 .replace(/[^a-z0-9]/g, '') // Garde uniquement les lettres et chiffres
-                .trim() // Supprime les espaces au début et à la fin
-                .replace(/\s+/g, ''); // Supprime tous les espaces
+                .trim(); // Supprime les espaces au début et à la fin
         },
 
         // Vérifie si un membre existe déjà
@@ -253,32 +252,51 @@ const app = createApp({
 
         // Mise à jour lors de la saisie du nom ou prénom
         async onMemberInfoChange(field) {
-            if (this.currentMember[field]) {
-                // Recherche de suggestions
-                this.searchMembers(this.currentMember[field]);
-                
-                // Vérification des doublons exacts
-                if (this.currentMember.nom && this.currentMember.prenom) {
-                    const normalizedNewNom = this.normalizeString(this.currentMember.nom);
-                    const normalizedNewPrenom = this.normalizeString(this.currentMember.prenom);
-                    
-                    const existingMember = this.members.find(member => {
-                        const normalizedExistingNom = this.normalizeString(member.nom);
-                        const normalizedExistingPrenom = this.normalizeString(member.prenom);
-                        return normalizedExistingNom === normalizedNewNom && 
-                               normalizedExistingPrenom === normalizedNewPrenom &&
-                               (!this.currentMember.id || member.id !== this.currentMember.id);
-                    });
-                    
-                    if (existingMember) {
-                        if (confirm('Un membre avec ce nom et prénom existe déjà. Voulez-vous modifier son profil ?')) {
-                            this.selectMember(existingMember);
-                        }
-                    }
-                }
-            } else {
+            if (!this.currentMember[field]) {
                 this.showSuggestions = false;
                 this.memberSuggestions = [];
+                return;
+            }
+
+            // Recherche de suggestions
+            const searchTerm = this.currentMember[field];
+            const normalizedSearch = this.normalizeString(searchTerm);
+            
+            this.memberSuggestions = this.members.filter(member => {
+                const normalizedNom = this.normalizeString(member.nom);
+                const normalizedPrenom = this.normalizeString(member.prenom);
+                const fullName = normalizedNom + normalizedPrenom;
+                
+                // Ne pas suggérer le membre en cours d'édition
+                if (this.currentMember.id && member.id === this.currentMember.id) {
+                    return false;
+                }
+                
+                return fullName.includes(normalizedSearch);
+            }).slice(0, 5); // Limite à 5 suggestions
+
+            this.showSuggestions = this.memberSuggestions.length > 0;
+
+            // Vérification des doublons exacts
+            if (this.currentMember.nom && this.currentMember.prenom) {
+                const normalizedNewNom = this.normalizeString(this.currentMember.nom);
+                const normalizedNewPrenom = this.normalizeString(this.currentMember.prenom);
+
+                const existingMember = this.members.find(member => {
+                    if (this.currentMember.id && member.id === this.currentMember.id) {
+                        return false; // Ignorer le membre en cours d'édition
+                    }
+                    const normalizedExistingNom = this.normalizeString(member.nom);
+                    const normalizedExistingPrenom = this.normalizeString(member.prenom);
+                    return normalizedExistingNom === normalizedNewNom && 
+                           normalizedExistingPrenom === normalizedNewPrenom;
+                });
+
+                if (existingMember) {
+                    if (confirm(`Un membre avec ce nom existe déjà : ${existingMember.nom} ${existingMember.prenom}.\nVoulez-vous modifier son profil ?`)) {
+                        this.selectMember(existingMember);
+                    }
+                }
             }
         }
     },

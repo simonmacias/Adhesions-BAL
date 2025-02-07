@@ -81,4 +81,12 @@ body {
 .auth-modal .form-control:focus {
     border-color: var(--accent-color);
     box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.dropdown-item:hover {
+    background-color: var(--bg-color);
 } 

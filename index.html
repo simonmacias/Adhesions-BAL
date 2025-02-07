@@ -47,8 +47,9 @@
         <div id="app" class="container py-4" v-cloak>
             <div v-if="isAuthenticated">
                 <header class="bg-primary text-white py-3">
-                    <div class="container">
-                        <h1 class="h3">Gestion des Adhérents</h1>
+                    <div class="container d-flex justify-content-between align-items-center">
+                        <h1 class="h3 mb-0">Gestion des Adhérents</h1>
+                        <span class="text-light small">v4.0.0</span>
                     </div>
                 </header>
 
@@ -349,9 +350,8 @@
                                                  style="z-index: 1000; max-height: 200px; overflow-y: auto;">
                                                 <div v-for="member in memberSuggestions" 
                                                      :key="member.id"
-                                                     class="dropdown-item py-2 px-3"
-                                                     @click="selectMember(member)"
-                                                     style="cursor: pointer;">
+                                                     class="dropdown-item py-2 px-3 cursor-pointer"
+                                                     @click="selectMember(member)">
                                                     <strong>{{ member.nom }} {{ member.prenom }}</strong>
                                                     <br>
                                                     <small class="text-muted">{{ member.ville }}</small>
@@ -372,9 +372,8 @@
                                                  style="z-index: 1000; max-height: 200px; overflow-y: auto;">
                                                 <div v-for="member in memberSuggestions" 
                                                      :key="member.id"
-                                                     class="dropdown-item py-2 px-3"
-                                                     @click="selectMember(member)"
-                                                     style="cursor: pointer;">
+                                                     class="dropdown-item py-2 px-3 cursor-pointer"
+                                                     @click="selectMember(member)">
                                                     <strong>{{ member.nom }} {{ member.prenom }}</strong>
                                                     <br>
                                                     <small class="text-muted">{{ member.ville }}</small>
