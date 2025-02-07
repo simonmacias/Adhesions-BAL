@@ -106,5 +106,22 @@ export const dataService = {
             console.error('Erreur de connexion à Supabase:', error)
             return false
         }
+    },
+
+    // Récupérer le hash d'authentification
+    async getAuthHash() {
+        try {
+            const { data, error } = await supabase
+                .from('config')
+                .select('value')
+                .eq('key', 'auth_hash')
+                .single()
+            
+            if (error) throw error
+            return data?.value || null
+        } catch (error) {
+            console.error('Erreur lors de la récupération du hash:', error)
+            return null
+        }
     }
 } 

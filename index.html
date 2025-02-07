@@ -43,7 +43,7 @@
                 <header class="bg-primary text-white py-3">
                     <div class="container d-flex justify-content-between align-items-center">
                         <h1 class="h3 mb-0">Gestion des Adhérents</h1>
-                        <span class="text-light small">v4.0.10</span>
+                        <span class="text-light small">v4.0.11</span>
                     </div>
                 </header>
 
@@ -739,6 +739,17 @@
                     console.error('Erreur lors de la recherche de villes:', error)
                     return []
                 }
+            },
+
+            // Récupérer le hash d'authentification
+            async getAuthHash() {
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .select('auth_hash')
+                    .single()
+                
+                if (error) throw error
+                return data.auth_hash
             }
         }
         
@@ -2008,17 +2019,28 @@
                         .map(([formule, nombre]) => `${formule}: ${nombre}`)
                         .join('<br>');
                 },
-                authenticate() {
-                    const correctPassword = config.decrypt(config.authHash);
-                    if (this.password === correctPassword) {
-                        this.isAuthenticated = true;
-                        this.authError = false;
-                        this.authModal.hide();
-                        // Sauvegarder l'état d'authentification
-                        sessionStorage.setItem('isAuthenticated', 'true');
-                        // Charger les données après authentification
-                        this.loadData();
-                    } else {
+                async authenticate() {
+                    try {
+                        const authHash = await dataService.getAuthHash();
+                        if (!authHash) {
+                            console.error('Impossible de récupérer le hash d\'authentification');
+                            this.authError = true;
+                            return;
+                        }
+                        
+                        if (this.password === atob(authHash)) {
+                            this.isAuthenticated = true;
+                            this.authError = false;
+                            this.authModal.hide();
+                            // Sauvegarder l'état d'authentification
+                            sessionStorage.setItem('isAuthenticated', 'true');
+                            // Charger les données après authentification
+                            this.loadData();
+                        } else {
+                            this.authError = true;
+                        }
+                    } catch (error) {
+                        console.error('Erreur lors de l\'authentification:', error);
                         this.authError = true;
                     }
                 },
