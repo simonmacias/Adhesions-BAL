@@ -242,16 +242,25 @@ const app = createApp({
 
         // Sélection d'un membre suggéré
         selectMember(member) {
+            // Copier toutes les données du membre sélectionné
             this.currentMember = { ...member };
-            this.villeSearch = member.ville && member.code_postal 
-                ? `${member.ville} (${member.code_postal})`
-                : '';
+            this.villeSearch = member.ville && member.code_postal ? `${member.ville} (${member.code_postal})` : '';
             this.showSuggestions = false;
             this.memberSuggestions = [];
+            
+            // Mettre à jour le titre du modal pour indiquer qu'on est en mode édition
+            const modalTitle = document.getElementById('memberModalLabel');
+            if (modalTitle) {
+                modalTitle.textContent = 'Modifier un adhérent';
+            }
         },
 
         // Mise à jour lors de la saisie du nom ou prénom
         async onMemberInfoChange(field) {
+            if (field !== 'nom') {
+                return;
+            }
+
             if (!this.currentMember[field]) {
                 this.showSuggestions = false;
                 this.memberSuggestions = [];
@@ -272,7 +281,7 @@ const app = createApp({
                     return false;
                 }
                 
-                return fullName.includes(normalizedSearch);
+                return normalizedNom.includes(normalizedSearch);
             }).slice(0, 5); // Limite à 5 suggestions
 
             this.showSuggestions = this.memberSuggestions.length > 0;

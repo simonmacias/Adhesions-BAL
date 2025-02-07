@@ -43,7 +43,7 @@
                 <header class="bg-primary text-white py-3">
                     <div class="container d-flex justify-content-between align-items-center">
                         <h1 class="h3 mb-0">Gestion des Adhérents</h1>
-                        <span class="text-light small">v4.0.4</span>
+                        <span class="text-light small">v4.0.5</span>
                     </div>
                 </header>
 
@@ -360,19 +360,6 @@
                                                    v-model="currentMember.prenom"
                                                    @input="onMemberInfoChange('prenom')"
                                                    @blur="currentMember.prenom = currentMember.prenom.charAt(0).toUpperCase() + currentMember.prenom.slice(1).toLowerCase()">
-                                            <!-- Liste des suggestions pour le prénom -->
-                                            <div v-if="showSuggestions && memberSuggestions.length" 
-                                                 class="position-absolute w-100 mt-1 bg-white border rounded shadow-sm" 
-                                                 style="z-index: 1000; max-height: 200px; overflow-y: auto;">
-                                                <div v-for="member in memberSuggestions" 
-                                                     :key="member.id"
-                                                     class="dropdown-item py-2 px-3 cursor-pointer"
-                                                     @click="selectMember(member)">
-                                                    <strong>{{ member.nom }} {{ member.prenom }}</strong>
-                                                    <br>
-                                                    <small class="text-muted">{{ member.ville }}</small>
-                                                </div>
-                                            </div>
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label">Année de naissance</label>
