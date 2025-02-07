@@ -245,6 +245,8 @@ const app = createApp({
             // Copier toutes les données du membre sélectionné
             this.currentMember = { ...member };
             this.villeSearch = member.ville && member.code_postal ? `${member.ville} (${member.code_postal})` : '';
+            
+            // Masquer la liste déroulante
             this.showSuggestions = false;
             this.memberSuggestions = [];
             
@@ -273,8 +275,6 @@ const app = createApp({
             
             this.memberSuggestions = this.members.filter(member => {
                 const normalizedNom = this.normalizeString(member.nom);
-                const normalizedPrenom = this.normalizeString(member.prenom);
-                const fullName = normalizedNom + normalizedPrenom;
                 
                 // Ne pas suggérer le membre en cours d'édition
                 if (this.currentMember.id && member.id === this.currentMember.id) {
@@ -304,6 +304,7 @@ const app = createApp({
                 if (existingMember) {
                     if (confirm(`Un membre avec ce nom existe déjà : ${existingMember.nom} ${existingMember.prenom}.\nVoulez-vous modifier son profil ?`)) {
                         this.selectMember(existingMember);
+                        this.showSuggestions = false; // Masquer la liste après sélection
                     }
                 }
             }
