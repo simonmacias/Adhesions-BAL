@@ -334,21 +334,22 @@
                                                class="form-control"
                                                :class="{ 'is-invalid': formErrors.includes('Le nom est obligatoire') }"
                                                v-model="currentMember.nom"
-                                               @input="onMemberInfoChange"
+                                               @input="onMemberInfoChange('nom')"
                                                @blur="currentMember.nom = currentMember.nom.toUpperCase()">
-                                        <div v-if="searchResults.length" 
+                                        <!-- Liste des suggestions pour le nom -->
+                                        <div v-if="showSuggestions && memberSuggestions.length" 
                                              class="position-absolute w-100 mt-1 bg-white border rounded shadow-sm" 
                                              style="z-index: 1000; max-height: 200px; overflow-y: auto;">
-                                                <div v-for="result in searchResults" 
-                                                     :key="result.id"
-                                                     class="dropdown-item py-2 px-3 cursor-pointer"
-                                                     @click="selectMember(result)"
-                                                     style="cursor: pointer;">
-                                                    <strong>{{ result.nom }} {{ result.prenom }}</strong>
-                                                    <br>
-                                                    <small class="text-muted">{{ result.email }}</small>
-                                                </div>
+                                            <div v-for="member in memberSuggestions" 
+                                                 :key="member.id"
+                                                 class="dropdown-item py-2 px-3"
+                                                 @click="selectMember(member)"
+                                                 style="cursor: pointer;">
+                                                <strong>{{ member.nom }} {{ member.prenom }}</strong>
+                                                <br>
+                                                <small class="text-muted">{{ member.ville }}</small>
                                             </div>
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Prénom *</label>
@@ -356,21 +357,22 @@
                                                class="form-control"
                                                :class="{ 'is-invalid': formErrors.includes('Le prénom est obligatoire') }"
                                                v-model="currentMember.prenom"
-                                               @input="onMemberInfoChange"
+                                               @input="onMemberInfoChange('prenom')"
                                                @blur="currentMember.prenom = currentMember.prenom.charAt(0).toUpperCase() + currentMember.prenom.slice(1).toLowerCase()">
-                                        <div v-if="searchResults.length" 
+                                        <!-- Liste des suggestions pour le prénom -->
+                                        <div v-if="showSuggestions && memberSuggestions.length" 
                                              class="position-absolute w-100 mt-1 bg-white border rounded shadow-sm" 
                                              style="z-index: 1000; max-height: 200px; overflow-y: auto;">
-                                                <div v-for="result in searchResults" 
-                                                     :key="result.id"
-                                                     class="dropdown-item py-2 px-3 cursor-pointer"
-                                                     @click="selectMember(result)"
-                                                     style="cursor: pointer;">
-                                                    <strong>{{ result.nom }} {{ result.prenom }}</strong>
-                                                    <br>
-                                                    <small class="text-muted">{{ result.email }}</small>
-                                                </div>
+                                            <div v-for="member in memberSuggestions" 
+                                                 :key="member.id"
+                                                 class="dropdown-item py-2 px-3"
+                                                 @click="selectMember(member)"
+                                                 style="cursor: pointer;">
+                                                <strong>{{ member.nom }} {{ member.prenom }}</strong>
+                                                <br>
+                                                <small class="text-muted">{{ member.ville }}</small>
                                             </div>
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Année de naissance</label>
@@ -828,6 +830,8 @@
                         format: null
                     },
                     periodModalInstance: null,
+                    showSuggestions: false,
+                    memberSuggestions: [],
                 }
             },
             mounted() {
@@ -2008,7 +2012,7 @@
                         this.authError = true;
                     }
                 },
-                onMemberInfoChange() {
+                onMemberInfoChange(field) {
                     // Add any additional logic you want to execute when member info changes
                     console.log('Member info changed:', this.currentMember);
                 },

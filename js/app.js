@@ -17,7 +17,9 @@ const app = createApp({
             formErrors: [],
             searchResults: [],
             similarMembers: [],
-            villeSearch: ''
+            villeSearch: '',
+            showSuggestions: false,
+            memberSuggestions: []
         }
     },
     methods: {
@@ -220,28 +222,63 @@ const app = createApp({
             );
         },
 
-        // Mise à jour du nom/prénom avec vérification des doublons
-        async onMemberInfoChange() {
-            if (this.currentMember.nom && this.currentMember.prenom) {
-                const normalizedNewNom = this.normalizeString(this.currentMember.nom);
-                const normalizedNewPrenom = this.normalizeString(this.currentMember.prenom);
+        // Recherche de membres existants
+        searchMembers(searchTerm) {
+            if (!searchTerm) {
+                this.memberSuggestions = [];
+                this.showSuggestions = false;
+                return;
+            }
+
+            const normalizedSearch = this.normalizeString(searchTerm);
+            this.memberSuggestions = this.members.filter(member => {
+                const normalizedNom = this.normalizeString(member.nom);
+                const normalizedPrenom = this.normalizeString(member.prenom);
+                const fullName = normalizedNom + normalizedPrenom;
+                return fullName.includes(normalizedSearch);
+            }).slice(0, 5); // Limite à 5 suggestions
+
+            this.showSuggestions = this.memberSuggestions.length > 0;
+        },
+
+        // Sélection d'un membre suggéré
+        selectMember(member) {
+            this.currentMember = { ...member };
+            this.villeSearch = member.ville && member.code_postal 
+                ? `${member.ville} (${member.code_postal})`
+                : '';
+            this.showSuggestions = false;
+            this.memberSuggestions = [];
+        },
+
+        // Mise à jour lors de la saisie du nom ou prénom
+        async onMemberInfoChange(field) {
+            if (this.currentMember[field]) {
+                // Recherche de suggestions
+                this.searchMembers(this.currentMember[field]);
                 
-                const existingMember = this.members.find(member => {
-                    const normalizedExistingNom = this.normalizeString(member.nom);
-                    const normalizedExistingPrenom = this.normalizeString(member.prenom);
-                    return normalizedExistingNom === normalizedNewNom && 
-                           normalizedExistingPrenom === normalizedNewPrenom &&
-                           (!this.currentMember.id || member.id !== this.currentMember.id);
-                });
-                
-                if (existingMember) {
-                    // Membre trouvé, on passe en mode édition
-                    this.currentMember = { ...existingMember };
-                    this.villeSearch = existingMember.ville && existingMember.code_postal 
-                        ? `${existingMember.ville} (${existingMember.code_postal})`
-                        : '';
-                    alert('Un membre avec ce nom et prénom existe déjà. Le profil a été chargé en mode édition.');
+                // Vérification des doublons exacts
+                if (this.currentMember.nom && this.currentMember.prenom) {
+                    const normalizedNewNom = this.normalizeString(this.currentMember.nom);
+                    const normalizedNewPrenom = this.normalizeString(this.currentMember.prenom);
+                    
+                    const existingMember = this.members.find(member => {
+                        const normalizedExistingNom = this.normalizeString(member.nom);
+                        const normalizedExistingPrenom = this.normalizeString(member.prenom);
+                        return normalizedExistingNom === normalizedNewNom && 
+                               normalizedExistingPrenom === normalizedNewPrenom &&
+                               (!this.currentMember.id || member.id !== this.currentMember.id);
+                    });
+                    
+                    if (existingMember) {
+                        if (confirm('Un membre avec ce nom et prénom existe déjà. Voulez-vous modifier son profil ?')) {
+                            this.selectMember(existingMember);
+                        }
+                    }
                 }
+            } else {
+                this.showSuggestions = false;
+                this.memberSuggestions = [];
             }
         }
     },
