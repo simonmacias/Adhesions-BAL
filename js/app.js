@@ -221,9 +221,9 @@ const app = createApp({
         // Mise à jour du nom/prénom avec vérification des doublons
         async onMemberInfoChange() {
             if (this.currentMember.nom && this.currentMember.prenom) {
-                const existingMember = this.checkExistingMember(
-                    this.currentMember.nom,
-                    this.currentMember.prenom
+                const existingMember = this.members.find(member => 
+                    this.normalizeString(member.nom) === this.normalizeString(this.currentMember.nom) &&
+                    this.normalizeString(member.prenom) === this.normalizeString(this.currentMember.prenom)
                 );
                 
                 if (existingMember && (!this.currentMember.id || existingMember.id !== this.currentMember.id)) {
