@@ -1,23 +1,17 @@
 # Fichiers de données sensibles
 *.csv
-*.json
-*.xlsx
-*.xls
+adherents_*.json
+test_*.json
 
 # Fichiers de configuration
 .env
-config.js
 .env.local
 .env.*.local
 
-# Dépendances
-node_modules/
-__pycache__/
-*.py[cod]
-dist/
-build/
-.venv/
-venv/
+# Scripts de conversion
+convert_*.py
+convert.js
+adherents_import.js
 
 # Fichiers système
 .DS_Store
@@ -31,28 +25,4 @@ Thumbs.db
 *.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
-
-# Fichiers de build
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-develop-eggs/
-downloads/
-eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Coverage
-coverage/
-.coverage
-.pytest_cache/
-htmlcov/ 
+yarn-error.log* 

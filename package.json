@@ -1,0 +1,14 @@
+{
+  "name": "gestion-adherents",
+  "version": "1.0.0",
+  "description": "Application de gestion des adhérents",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve",
+    "dev": "npx serve"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "serve": "^14.2.1"
+  }
+} 
