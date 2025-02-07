@@ -204,7 +204,9 @@ const app = createApp({
             return str.toLowerCase()
                 .normalize('NFD')
                 .replace(/[\u0300-\u036f]/g, '') // Supprime les accents
-                .replace(/[^a-z0-9]/g, ''); // Garde uniquement les lettres et chiffres
+                .replace(/[^a-z0-9]/g, '') // Garde uniquement les lettres et chiffres
+                .trim() // Supprime les espaces au début et à la fin
+                .replace(/\s+/g, ''); // Supprime tous les espaces
         },
 
         // Vérifie si un membre existe déjà
@@ -221,12 +223,18 @@ const app = createApp({
         // Mise à jour du nom/prénom avec vérification des doublons
         async onMemberInfoChange() {
             if (this.currentMember.nom && this.currentMember.prenom) {
-                const existingMember = this.members.find(member => 
-                    this.normalizeString(member.nom) === this.normalizeString(this.currentMember.nom) &&
-                    this.normalizeString(member.prenom) === this.normalizeString(this.currentMember.prenom)
-                );
+                const normalizedNewNom = this.normalizeString(this.currentMember.nom);
+                const normalizedNewPrenom = this.normalizeString(this.currentMember.prenom);
                 
-                if (existingMember && (!this.currentMember.id || existingMember.id !== this.currentMember.id)) {
+                const existingMember = this.members.find(member => {
+                    const normalizedExistingNom = this.normalizeString(member.nom);
+                    const normalizedExistingPrenom = this.normalizeString(member.prenom);
+                    return normalizedExistingNom === normalizedNewNom && 
+                           normalizedExistingPrenom === normalizedNewPrenom &&
+                           (!this.currentMember.id || member.id !== this.currentMember.id);
+                });
+                
+                if (existingMember) {
                     // Membre trouvé, on passe en mode édition
                     this.currentMember = { ...existingMember };
                     this.villeSearch = existingMember.ville && existingMember.code_postal 
