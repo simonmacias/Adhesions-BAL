@@ -14,697 +14,1998 @@
     </style>
 </head>
 <body>
-    <div id="app">
-        <!-- Page de connexion -->
-        <div v-if="!isAuthenticated" class="container mt-5">
-            <div class="row justify-content-center">
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h4 class="text-center">Connexion</h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="form-group mb-3">
-                                <label for="password">Mot de passe</label>
-                                <input 
-                                    type="password" 
-                                    class="form-control" 
-                                    id="password"
-                                    v-model="password"
-                                    @keyup.enter="login"
-                                >
-                            </div>
-                            <div v-if="authError" class="alert alert-danger">
-                                Mot de passe incorrect
-                            </div>
-                            <button class="btn btn-primary w-100" @click="login">
-                                Se connecter
-                            </button>
-                        </div>
+    <!-- Modal d'authentification -->
+    <div class="modal fade" id="authModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Authentification requise</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="password">Mot de passe</label>
+                        <input type="password" class="form-control" id="password" v-model="password" @keyup.enter="authenticate">
+                    </div>
+                    <div class="text-danger mt-2" v-if="authError">
+                        Mot de passe incorrect
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Contenu principal -->
-        <div v-else>
-            <div id="app" class="container py-4" v-cloak>
-                <div v-if="isAuthenticated">
-                    <header class="bg-primary text-white py-3">
-                        <div class="container">
-                            <h1 class="h3">Gestion des Adhérents</h1>
-                        </div>
-                    </header>
-
-                    <main class="container py-4">
-                        <!-- Navigation par onglets -->
-                        <ul class="nav nav-tabs mb-4">
-                            <li class="nav-item">
-                                <a class="nav-link" :class="{ active: activeTab === 'adherents' }" @click.prevent="activeTab = 'adherents'" href="#">
-                                    <i class="bi bi-people"></i> Adhérents
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" :class="{ active: activeTab === 'stats' }" @click.prevent="activeTab = 'stats'" href="#">
-                                    <i class="bi bi-graph-up"></i> Statistiques
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" :class="{ active: activeTab === 'benevoles' }" @click.prevent="activeTab = 'benevoles'" href="#">
-                                    <i class="bi bi-heart"></i> Bénévoles
-                                </a>
-                            </li>
-                            <li class="nav-item ms-auto">
-                                <div class="dropdown">
-                                    <button class="btn btn-outline-primary dropdown-toggle" type="button" id="importExportMenu" data-bs-toggle="dropdown">
-                                        <i class="bi bi-gear"></i> Import/Export
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li>
-                                            <a class="dropdown-item" href="#" @click="$refs.xlsFileInput.click()">
-                                                <i class="bi bi-upload"></i> Importer XLS
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" href="#" @click="$refs.jsonFileInput.click()">
-                                                <i class="bi bi-code-slash"></i> Importer JSON
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" href="#" @click="$refs.csvFileInput.click()">
-                                                <i class="bi bi-file-text"></i> Importer CSV
-                                            </a>
-                                        </li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li>
-                                            <a class="dropdown-item" href="#" @click="startExport('xls')">
-                                                <i class="bi bi-download"></i> Exporter XLS
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" href="#" @click="startExport('json')">
-                                                <i class="bi bi-code-slash"></i> Exporter JSON
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" href="#" @click="startExport('csv')">
-                                                <i class="bi bi-file-text"></i> Exporter CSV
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </li>
-                        </ul>
-
-                        <!-- Inputs cachés pour import -->
-                        <input type="file" ref="xlsFileInput" accept=".xlsx,.xls" style="display: none;" @change="handleXLSImport">
-                        <input type="file" ref="jsonFileInput" accept=".json" style="display: none;" @change="handleJSONImport">
-                        <input type="file" ref="csvFileInput" accept=".csv" style="display: none;" @change="handleCSVImport">
-
-                        <!-- Contenu de l'onglet Adhérents -->
-                        <div v-if="activeTab === 'adherents'">
-                            <!-- Barre de recherche -->
-                            <div class="row mb-4">
-                                <div class="col">
-                                    <div class="card">
-                                        <div class="card-body">
-                                            <div class="row g-3">
-                                                <div class="col-md-6">
-                                                    <div class="input-group">
-                                                        <span class="input-group-text">
-                                                            <i class="bi bi-search"></i>
-                                                        </span>
-                                                        <input 
-                                                            type="text" 
-                                                            class="form-control" 
-                                                            v-model="searchQuery" 
-                                                            placeholder="Rechercher un adhérent (nom, prénom, email, ville...)"
-                                                        >
-                                                        <button 
-                                                            class="btn btn-outline-secondary" 
-                                                            type="button"
-                                                            @click="searchQuery = ''"
-                                                            v-if="searchQuery"
-                                                        >
-                                                            <i class="bi bi-x-lg"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="btn-group">
-                                                        <button 
-                                                            class="btn" 
-                                                            :class="activeFilter === 'tous' ? 'btn-primary' : 'btn-outline-primary'"
-                                                            @click="activeFilter = 'tous'"
-                                                        >
-                                                            Tous
-                                                        </button>
-                                                        <button 
-                                                            class="btn" 
-                                                            :class="activeFilter === 'cotisation' ? 'btn-success' : 'btn-outline-success'"
-                                                            @click="activeFilter = 'cotisation'"
-                                                        >
-                                                            Cotisation à jour
-                                                        </button>
-                                                        <button 
-                                                            class="btn" 
-                                                            :class="activeFilter === 'retard' ? 'btn-danger' : 'btn-outline-danger'"
-                                                            @click="activeFilter = 'retard'"
-                                                        >
-                                                            En retard
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="mt-2" v-if="filteredMembers.length !== members.length">
-                                                <small class="text-muted">
-                                                    {{ filteredMembers.length }} résultat(s) sur {{ members.length }} adhérents
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Bouton Nouvel adhérent -->
-                            <div class="row mb-4">
-                                <div class="col">
-                                    <button @click="showAddModal" class="btn btn-primary">
-                                        <i class="bi bi-plus-lg"></i> Nouvel adhérent
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Tableau des adhérents -->
-                            <div class="row">
-                                <div class="col">
-                                    <div class="table-responsive">
-                                        <table class="table table-hover">
-                                            <thead>
-                                                <tr>
-                                                    <th>Nom</th>
-                                                    <th>Prénom</th>
-                                                    <th>Email</th>
-                                                    <th>Ville</th>
-                                                    <th>Formule</th>
-                                                    <th>Cotisation</th>
-                                                    <th>Enfants</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr v-for="member in filteredMembers" :key="member.id">
-                                                    <td>{{ member.nom }}</td>
-                                                    <td>{{ member.prenom }}</td>
-                                                    <td>{{ member.email }}</td>
-                                                    <td>{{ member.ville }}</td>
-                                                    <td>{{ member.formuleadhesion }}</td>
-                                                    <td>
-                                                        <span :class="member.cotisationAJour ? 'badge bg-success' : 'badge bg-danger'">
-                                                            {{ member.cotisationAJour ? 'À jour' : 'En retard' }}
-                                                        </span>
-                                                    </td>
-                                                    <td>{{ member.enfants || 0 }}</td>
-                                                    <td>
-                                                        <button @click="editMember(member)" class="btn btn-sm btn-outline-primary me-1">
-                                                            <i class="bi bi-pencil"></i>
-                                                        </button>
-                                                        <button @click="deleteMember(member)" class="btn btn-sm btn-outline-danger">
-                                                            <i class="bi bi-trash"></i>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Contenu de l'onglet Statistiques -->
-                        <div v-if="activeTab === 'stats'" class="row">
-                            <!-- Statistiques générales -->
-                            <div class="col-12 mb-4">
-                                <div class="row">
-                                    <div class="col-md-3" v-for="stat in statistics" :key="stat.label">
-                                        <div class="card">
-                                            <div class="card-body">
-                                                <h5 class="card-title">{{ stat.label }}</h5>
-                                                <p class="card-text h3">{{ stat.value }}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Graphiques -->
-                            <div class="col-md-6 mb-4">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Répartition par formule d'adhésion</h5>
-                                        <canvas ref="formulesChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Répartition par genre</h5>
-                                        <canvas ref="genreChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Répartition par âge</h5>
-                                        <canvas ref="agesChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Évolution des cotisations</h5>
-                                        <canvas ref="cotisationsChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-12 mb-4">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Provenance des adhérents</h5>
-                                        <div id="map"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-12 mb-4">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Historique des adhésions</h5>
-                                        <canvas ref="evolutionChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Modal pour ajout/modification -->
-                        <div class="modal fade" id="memberModal" tabindex="-1" aria-labelledby="memberModalLabel" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="memberModalLabel">
-                                            {{ currentMember?.id ? 'Modifier' : 'Ajouter' }} un adhérent
-                                        </h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body" v-if="currentMember">
-                                        <!-- Affichage des erreurs -->
-                                        <div v-if="formErrors.length" class="alert alert-danger mb-3">
-                                            <h6 class="alert-heading">Erreurs à corriger :</h6>
-                                            <ul class="mb-0">
-                                                <li v-for="error in formErrors" :key="error">{{ error }}</li>
-                                            </ul>
-                                        </div>
-
-                                        <!-- Adhérents similaires -->
-                                        <div v-if="similarMembers.length" class="alert alert-warning mb-3">
-                                            <h6 class="alert-heading">Adhérents similaires trouvés :</h6>
-                                            <ul class="mb-0">
-                                                <li v-for="member in similarMembers" :key="member.id">
-                                                    {{ member.nom }} {{ member.prenom }} ({{ member.email }})
-                                                </li>
-                                            </ul>
-                                        </div>
-
-                                        <div class="row g-3">
-                                            <!-- Informations personnelles -->
-                                            <div class="col-md-6">
-                                                <label class="form-label">Nom *</label>
-                                                <div class="position-relative">
-                                                    <input type="text" 
-                                                           class="form-control" 
-                                                           :class="{ 'is-invalid': formErrors.includes('Le nom est obligatoire') }"
-                                                           v-model="currentMember.nom"
-                                                           @input="handleNomInput"
-                                                           @blur="formatNomPrenom">
-                                                    <div v-if="searchResults.length" 
-                                                         class="position-absolute w-100 mt-1 bg-white border rounded shadow-sm" 
-                                                         style="z-index: 1000; max-height: 200px; overflow-y: auto;">
-                                                            <div v-for="result in searchResults" 
-                                                                 :key="result.id"
-                                                                 class="dropdown-item py-2 px-3 cursor-pointer"
-                                                                 @click="selectMember(result)"
-                                                                 style="cursor: pointer;">
-                                                                <strong>{{ result.nom }} {{ result.prenom }}</strong>
-                                                                <br>
-                                                                <small class="text-muted">{{ result.email }}</small>
-                                                            </div>
-                                                        </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Prénom *</label>
-                                                <input type="text" 
-                                                       class="form-control"
-                                                       :class="{ 'is-invalid': formErrors.includes('Le prénom est obligatoire') }"
-                                                       v-model="currentMember.prenom"
-                                                       @blur="formatNomPrenom">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Année de naissance</label>
-                                                <input type="number" 
-                                                       class="form-control" 
-                                                       v-model.number="currentMember.datenaissance"
-                                                       :min="1900" 
-                                                       :max="currentYear"
-                                                       placeholder="AAAA">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Genre</label>
-                                                <select class="form-select" v-model="currentMember.genre">
-                                                    <option value="">Sélectionner...</option>
-                                                    <option value="F">Femme</option>
-                                                    <option value="H">Homme</option>
-                                                    <option value="A">Autre</option>
-                                                </select>
-                                            </div>
-
-                                            <!-- Coordonnées -->
-                                            <div class="col-md-12">
-                                                <label class="form-label">Ville</label>
-                                                <div class="position-relative">
-                                                    <input 
-                                                        type="text" 
-                                                        class="form-control" 
-                                                        v-model="villeSearch"
-                                                        @input="searchVilles"
-                                                        placeholder="Rechercher une ville..."
-                                                    >
-                                                    <div v-if="villeResults.length" class="position-absolute w-100 mt-1 bg-white border rounded shadow-sm" style="z-index: 1000; max-height: 200px; overflow-y: auto;">
-                                                        <button 
-                                                            v-for="result in villeResults" 
-                                                            :key="result.code"
-                                                            class="dropdown-item py-2 text-start w-100"
-                                                            @click="selectVille(result)"
-                                                        >
-                                                            {{ result.nom }} ({{ result.code }})
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <div v-if="currentMember.ville" class="mt-2">
-                                                    <small class="text-muted">
-                                                        {{ currentMember.ville }} - {{ currentMember.code_postal }}
-                                                    </small>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Email</label>
-                                                <input type="email" class="form-control" v-model="currentMember.email">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Téléphone</label>
-                                                <input type="tel" class="form-control" v-model="currentMember.telephone">
-                                            </div>
-
-                                            <!-- Informations d'adhésion -->
-                                            <div class="col-md-6">
-                                                <label class="form-label">Date d'adhésion</label>
-                                                <input type="date" class="form-control" v-model="currentMember.dateadhesion">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Formule d'adhésion</label>
-                                                <select class="form-select" v-model="currentMember.formuleadhesion" @change="updateMontantCotisation">
-                                                    <option value="">Sélectionner...</option>
-                                                    <option v-for="formule in formules" 
-                                                            :key="formule.value" 
-                                                            :value="formule.value">
-                                                        {{ formule.label }}
-                                                    </option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Montant cotisation (€)</label>
-                                                <input type="number" class="form-control" v-model.number="currentMember.montantcotisation" min="0" step="0.5">
-                                                <small class="form-text text-muted">Modifiable si besoin</small>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Nombre d'enfants</label>
-                                                <input type="number" class="form-control" v-model.number="currentMember.enfants" min="0">
-                                            </div>
-
-                                            <!-- Historique -->
-                                            <div class="col-12">
-                                                <div class="card">
-                                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                                        <h6 class="mb-0">Historique des adhésions</h6>
-                                                        <button type="button" class="btn btn-outline-primary btn-sm" @click="ajouterAdhesion">
-                                                            <i class="bi bi-plus-circle"></i> Nouvelle adhésion
-                                                        </button>
-                                                    </div>
-                                                    <div class="card-body">
-                                                        <div class="table-responsive">
-                                                            <table class="table table-sm table-hover">
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th>Date</th>
-                                                                        <th>Formule</th>
-                                                                        <th>Montant</th>
-                                                                        <th class="text-end">Actions</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    <tr v-for="(adhesion, index) in currentMember.historique" :key="index">
-                                                                        <td>{{ formatDate(adhesion.date) }}</td>
-                                                                        <td>{{ adhesion.formule }}</td>
-                                                                        <td>{{ adhesion.montant }}€</td>
-                                                                        <td class="text-end">
-                                                                            <button type="button" 
-                                                                                    class="btn btn-outline-danger btn-sm" 
-                                                                                    @click="supprimerAdhesion(index)"
-                                                                                    title="Supprimer cette adhésion">
-                                                                                <i class="bi bi-trash"></i>
-                                                                            </button>
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr v-if="!currentMember.historique || currentMember.historique.length === 0">
-                                                                        <td colspan="4" class="text-center text-muted">
-                                                                            Aucune adhésion enregistrée
-                                                                        </td>
-                                                                    </tr>
-                                                                </tbody>
-                                                                <tfoot v-if="currentMember.historique && currentMember.historique.length > 0">
-                                                                    <tr>
-                                                                        <td colspan="2" class="text-end"><strong>Total :</strong></td>
-                                                                        <td colspan="2">
-                                                                            <strong>
-                                                                                {{ currentMember.historique.reduce((sum, adh) => sum + adh.montant, 0) }}€
-                                                                            </strong>
-                                                                        </td>
-                                                                    </tr>
-                                                                </tfoot>
-                                                            </table>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                                        <button type="button" class="btn btn-primary" @click="saveMember">Enregistrer</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Contenu de l'onglet Bénévoles -->
-                        <div v-if="activeTab === 'benevoles'" class="row">
-                            <div class="col-12 mb-4">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Informations pour les bénévoles</h5>
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <div class="mb-4">
-                                                    <h6>Procédure d'adhésion</h6>
-                                                    <ol class="list-group list-group-numbered">
-                                                        <li class="list-group-item">Accueillir l'adhérent et présenter l'association</li>
-                                                        <li class="list-group-item">Expliquer les différentes formules d'adhésion :
-                                                            <ul class="mt-2">
-                                                                <li>J'adhère (5€ ou plus) - Adhésion simple</li>
-                                                                <li>J'adore (15€ ou plus) - Adhésion de soutien</li>
-                                                                <li>J'accélère (20€ ou plus) - Super adhérent</li>
-                                                                <li>Passage (Prix Libre) - Adhésion ponctuelle</li>
-                                                            </ul>
-                                                        </li>
-                                                        <li class="list-group-item">Remplir le formulaire avec les informations de l'adhérent</li>
-                                                        <li class="list-group-item">Encaisser la cotisation et noter le montant</li>
-                                                        <li class="list-group-item">Remettre le reçu d'adhésion</li>
-                                                    </ol>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="mb-4">
-                                                    <h6>Contacts utiles</h6>
-                                                    <div class="list-group">
-                                                        <div class="list-group-item">
-                                                            <h6 class="mb-1">Présidents de l'association</h6>
-                                                            <p class="mb-1">Agathe MARTIN & Sylvain MILLET</p>
-                                                            <small>06.00.00.00.00 - 06.10.11.12.13</small>
-                                                        </div>
-                                                        <div class="list-group-item">
-                                                            <h6 class="mb-1">Support technique</h6>
-                                                            <p class="mb-1">Simon MACIAS</p>
-                                                            <small>06.16.40.23.36 - simon.macias@riseup.net</small>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Modal pour sélection de période -->
-                        <div class="modal fade" id="periodModal" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Sélection de la période</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="row g-3">
-                                            <div class="col-md-6">
-                                                <label class="form-label">Date de début</label>
-                                                <input type="date" class="form-control" v-model="exportPeriod.start">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Date de fin</label>
-                                                <input type="date" class="form-control" v-model="exportPeriod.end">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                                        <button type="button" class="btn btn-primary" @click="confirmExport">Exporter</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </main>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" @click="authenticate">Connexion</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
+    <div id="app" class="container py-4" v-cloak>
+        <div v-if="isAuthenticated">
+            <header class="bg-primary text-white py-3">
+                <div class="container">
+                    <h1 class="h3">Gestion des Adhérents</h1>
+                </div>
+            </header>
+
+            <main class="container py-4">
+                <!-- Navigation par onglets -->
+                <ul class="nav nav-tabs mb-4">
+                    <li class="nav-item">
+                        <a class="nav-link" :class="{ active: activeTab === 'adherents' }" @click.prevent="activeTab = 'adherents'" href="#">
+                            <i class="bi bi-people"></i> Adhérents
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" :class="{ active: activeTab === 'stats' }" @click.prevent="activeTab = 'stats'" href="#">
+                            <i class="bi bi-graph-up"></i> Statistiques
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" :class="{ active: activeTab === 'benevoles' }" @click.prevent="activeTab = 'benevoles'" href="#">
+                            <i class="bi bi-heart"></i> Bénévoles
+                        </a>
+                    </li>
+                    <li class="nav-item ms-auto">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="importExportMenu" data-bs-toggle="dropdown">
+                                <i class="bi bi-gear"></i> Import/Export
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="#" @click="$refs.xlsFileInput.click()">
+                                        <i class="bi bi-upload"></i> Importer XLS
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" @click="$refs.jsonFileInput.click()">
+                                        <i class="bi bi-code-slash"></i> Importer JSON
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" @click="$refs.csvFileInput.click()">
+                                        <i class="bi bi-file-text"></i> Importer CSV
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="#" @click="startExport('xls')">
+                                        <i class="bi bi-download"></i> Exporter XLS
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" @click="startExport('json')">
+                                        <i class="bi bi-code-slash"></i> Exporter JSON
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" @click="startExport('csv')">
+                                        <i class="bi bi-file-text"></i> Exporter CSV
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
+
+                <!-- Inputs cachés pour import -->
+                <input type="file" ref="xlsFileInput" accept=".xlsx,.xls" style="display: none;" @change="handleXLSImport">
+                <input type="file" ref="jsonFileInput" accept=".json" style="display: none;" @change="handleJSONImport">
+                <input type="file" ref="csvFileInput" accept=".csv" style="display: none;" @change="handleCSVImport">
+
+                <!-- Contenu de l'onglet Adhérents -->
+                <div v-if="activeTab === 'adherents'">
+                    <!-- Barre de recherche -->
+                    <div class="row mb-4">
+                        <div class="col">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="bi bi-search"></i>
+                                                </span>
+                                                <input 
+                                                    type="text" 
+                                                    class="form-control" 
+                                                    v-model="searchQuery" 
+                                                    placeholder="Rechercher un adhérent (nom, prénom, email, ville...)"
+                                                >
+                                                <button 
+                                                    class="btn btn-outline-secondary" 
+                                                    type="button"
+                                                    @click="searchQuery = ''"
+                                                    v-if="searchQuery"
+                                                >
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="btn-group">
+                                                <button 
+                                                    class="btn" 
+                                                    :class="activeFilter === 'tous' ? 'btn-primary' : 'btn-outline-primary'"
+                                                    @click="activeFilter = 'tous'"
+                                                >
+                                                    Tous
+                                                </button>
+                                                <button 
+                                                    class="btn" 
+                                                    :class="activeFilter === 'cotisation' ? 'btn-success' : 'btn-outline-success'"
+                                                    @click="activeFilter = 'cotisation'"
+                                                >
+                                                    Cotisation à jour
+                                                </button>
+                                                <button 
+                                                    class="btn" 
+                                                    :class="activeFilter === 'retard' ? 'btn-danger' : 'btn-outline-danger'"
+                                                    @click="activeFilter = 'retard'"
+                                                >
+                                                    En retard
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2" v-if="filteredMembers.length !== members.length">
+                                        <small class="text-muted">
+                                            {{ filteredMembers.length }} résultat(s) sur {{ members.length }} adhérents
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bouton Nouvel adhérent -->
+                    <div class="row mb-4">
+                        <div class="col">
+                            <button @click="showAddModal" class="btn btn-primary">
+                                <i class="bi bi-plus-lg"></i> Nouvel adhérent
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tableau des adhérents -->
+                    <div class="row">
+                        <div class="col">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Nom</th>
+                                            <th>Prénom</th>
+                                            <th>Email</th>
+                                            <th>Ville</th>
+                                            <th>Formule</th>
+                                            <th>Cotisation</th>
+                                            <th>Enfants</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="member in filteredMembers" :key="member.id">
+                                            <td>{{ member.nom }}</td>
+                                            <td>{{ member.prenom }}</td>
+                                            <td>{{ member.email }}</td>
+                                            <td>{{ member.ville }}</td>
+                                            <td>{{ member.formuleadhesion }}</td>
+                                            <td>
+                                                <span :class="member.cotisationAJour ? 'badge bg-success' : 'badge bg-danger'">
+                                                    {{ member.cotisationAJour ? 'À jour' : 'En retard' }}
+                                                </span>
+                                            </td>
+                                            <td>{{ member.enfants || 0 }}</td>
+                                            <td>
+                                                <button @click="editMember(member)" class="btn btn-sm btn-outline-primary me-1">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button @click="deleteMember(member)" class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contenu de l'onglet Statistiques -->
+                <div v-if="activeTab === 'stats'" class="row">
+                    <!-- Statistiques générales -->
+                    <div class="col-12 mb-4">
+                        <div class="row">
+                            <div class="col-md-3" v-for="stat in statistics" :key="stat.label">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ stat.label }}</h5>
+                                        <p class="card-text h3">{{ stat.value }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Graphiques -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Répartition par formule d'adhésion</h5>
+                                <canvas ref="formulesChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Répartition par genre</h5>
+                                <canvas ref="genreChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Répartition par âge</h5>
+                                <canvas ref="agesChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Évolution des cotisations</h5>
+                                <canvas ref="cotisationsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Provenance des adhérents</h5>
+                                <div id="map"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Historique des adhésions</h5>
+                                <canvas ref="evolutionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal pour ajout/modification -->
+                <div class="modal fade" id="memberModal" tabindex="-1" aria-labelledby="memberModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="memberModalLabel">
+                                    {{ currentMember?.id ? 'Modifier' : 'Ajouter' }} un adhérent
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body" v-if="currentMember">
+                                <!-- Affichage des erreurs -->
+                                <div v-if="formErrors.length" class="alert alert-danger mb-3">
+                                    <h6 class="alert-heading">Erreurs à corriger :</h6>
+                                    <ul class="mb-0">
+                                        <li v-for="error in formErrors" :key="error">{{ error }}</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Adhérents similaires -->
+                                <div v-if="similarMembers.length" class="alert alert-warning mb-3">
+                                    <h6 class="alert-heading">Adhérents similaires trouvés :</h6>
+                                    <ul class="mb-0">
+                                        <li v-for="member in similarMembers" :key="member.id">
+                                            {{ member.nom }} {{ member.prenom }} ({{ member.email }})
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div class="row g-3">
+                                    <!-- Informations personnelles -->
+                                    <div class="col-md-6">
+                                        <label class="form-label">Nom *</label>
+                                        <div class="position-relative">
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   :class="{ 'is-invalid': formErrors.includes('Le nom est obligatoire') }"
+                                                   v-model="currentMember.nom"
+                                                   @input="handleNomInput"
+                                                   @blur="formatNomPrenom">
+                                            <div v-if="searchResults.length" 
+                                                 class="position-absolute w-100 mt-1 bg-white border rounded shadow-sm" 
+                                                 style="z-index: 1000; max-height: 200px; overflow-y: auto;">
+                                                    <div v-for="result in searchResults" 
+                                                         :key="result.id"
+                                                         class="dropdown-item py-2 px-3 cursor-pointer"
+                                                         @click="selectMember(result)"
+                                                         style="cursor: pointer;">
+                                                        <strong>{{ result.nom }} {{ result.prenom }}</strong>
+                                                        <br>
+                                                        <small class="text-muted">{{ result.email }}</small>
+                                                    </div>
+                                                </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Prénom *</label>
+                                        <input type="text" 
+                                               class="form-control"
+                                               :class="{ 'is-invalid': formErrors.includes('Le prénom est obligatoire') }"
+                                               v-model="currentMember.prenom"
+                                               @blur="formatNomPrenom">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Année de naissance</label>
+                                        <input type="number" 
+                                               class="form-control" 
+                                               v-model.number="currentMember.datenaissance"
+                                               :min="1900" 
+                                               :max="currentYear"
+                                               placeholder="AAAA">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Genre</label>
+                                        <select class="form-select" v-model="currentMember.genre">
+                                            <option value="">Sélectionner...</option>
+                                            <option value="F">Femme</option>
+                                            <option value="H">Homme</option>
+                                            <option value="A">Autre</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Coordonnées -->
+                                    <div class="col-md-12">
+                                        <label class="form-label">Ville</label>
+                                        <div class="position-relative">
+                                            <input 
+                                                type="text" 
+                                                class="form-control" 
+                                                v-model="villeSearch"
+                                                @input="searchVilles"
+                                                placeholder="Rechercher une ville..."
+                                            >
+                                            <div v-if="villeResults.length" class="position-absolute w-100 mt-1 bg-white border rounded shadow-sm" style="z-index: 1000; max-height: 200px; overflow-y: auto;">
+                                                <button 
+                                                    v-for="result in villeResults" 
+                                                    :key="result.code"
+                                                    class="dropdown-item py-2 text-start w-100"
+                                                    @click="selectVille(result)"
+                                                >
+                                                    {{ result.nom }} ({{ result.code }})
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div v-if="currentMember.ville" class="mt-2">
+                                            <small class="text-muted">
+                                                {{ currentMember.ville }} - {{ currentMember.code_postal }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" class="form-control" v-model="currentMember.email">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Téléphone</label>
+                                        <input type="tel" class="form-control" v-model="currentMember.telephone">
+                                    </div>
+
+                                    <!-- Informations d'adhésion -->
+                                    <div class="col-md-6">
+                                        <label class="form-label">Date d'adhésion</label>
+                                        <input type="date" class="form-control" v-model="currentMember.dateadhesion">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Formule d'adhésion</label>
+                                        <select class="form-select" v-model="currentMember.formuleadhesion" @change="updateMontantCotisation">
+                                            <option value="">Sélectionner...</option>
+                                            <option v-for="formule in formules" 
+                                                    :key="formule.value" 
+                                                    :value="formule.value">
+                                                {{ formule.label }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Montant cotisation (€)</label>
+                                        <input type="number" class="form-control" v-model.number="currentMember.montantcotisation" min="0" step="0.5">
+                                        <small class="form-text text-muted">Modifiable si besoin</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Nombre d'enfants</label>
+                                        <input type="number" class="form-control" v-model.number="currentMember.enfants" min="0">
+                                    </div>
+
+                                    <!-- Historique -->
+                                    <div class="col-12">
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between align-items-center">
+                                                <h6 class="mb-0">Historique des adhésions</h6>
+                                                <button type="button" class="btn btn-outline-primary btn-sm" @click="ajouterAdhesion">
+                                                    <i class="bi bi-plus-circle"></i> Nouvelle adhésion
+                                                </button>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-hover">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Date</th>
+                                                                <th>Formule</th>
+                                                                <th>Montant</th>
+                                                                <th class="text-end">Actions</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr v-for="(adhesion, index) in currentMember.historique" :key="index">
+                                                                <td>{{ formatDate(adhesion.date) }}</td>
+                                                                <td>{{ adhesion.formule }}</td>
+                                                                <td>{{ adhesion.montant }}€</td>
+                                                                <td class="text-end">
+                                                                    <button type="button" 
+                                                                            class="btn btn-outline-danger btn-sm" 
+                                                                            @click="supprimerAdhesion(index)"
+                                                                            title="Supprimer cette adhésion">
+                                                                        <i class="bi bi-trash"></i>
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                            <tr v-if="!currentMember.historique || currentMember.historique.length === 0">
+                                                                <td colspan="4" class="text-center text-muted">
+                                                                    Aucune adhésion enregistrée
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                        <tfoot v-if="currentMember.historique && currentMember.historique.length > 0">
+                                                            <tr>
+                                                                <td colspan="2" class="text-end"><strong>Total :</strong></td>
+                                                                <td colspan="2">
+                                                                    <strong>
+                                                                        {{ currentMember.historique.reduce((sum, adh) => sum + adh.montant, 0) }}€
+                                                                    </strong>
+                                                                </td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                <button type="button" class="btn btn-primary" @click="saveMember">Enregistrer</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contenu de l'onglet Bénévoles -->
+                <div v-if="activeTab === 'benevoles'" class="row">
+                    <div class="col-12 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Informations pour les bénévoles</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-4">
+                                            <h6>Procédure d'adhésion</h6>
+                                            <ol class="list-group list-group-numbered">
+                                                <li class="list-group-item">Accueillir l'adhérent et présenter l'association</li>
+                                                <li class="list-group-item">Expliquer les différentes formules d'adhésion :
+                                                    <ul class="mt-2">
+                                                        <li>J'adhère (5€ ou plus) - Adhésion simple</li>
+                                                        <li>J'adore (15€ ou plus) - Adhésion de soutien</li>
+                                                        <li>J'accélère (20€ ou plus) - Super adhérent</li>
+                                                        <li>Passage (Prix Libre) - Adhésion ponctuelle</li>
+                                                    </ul>
+                                                </li>
+                                                <li class="list-group-item">Remplir le formulaire avec les informations de l'adhérent</li>
+                                                <li class="list-group-item">Encaisser la cotisation et noter le montant</li>
+                                                <li class="list-group-item">Remettre le reçu d'adhésion</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-4">
+                                            <h6>Contacts utiles</h6>
+                                            <div class="list-group">
+                                                <div class="list-group-item">
+                                                    <h6 class="mb-1">Responsable adhésions</h6>
+                                                    <p class="mb-1">Sylvain</p>
+                                                    <small>06.00.00.00.00 - sylvain@sylvain.fr</small>
+                                                </div>
+                                                <div class="list-group-item">
+                                                    <h6 class="mb-1">Responsable Stocks</h6>
+                                                    <p class="mb-1">Sylvain</p>
+                                                    <small>06.00.00.00.00 - sylvain@sylvain.fr</small>
+                                                </div>
+                                                <div class="list-group-item">
+                                                    <h6 class="mb-1">Support technique</h6>
+                                                    <p class="mb-1">Simon Macias</p>
+                                                    <small>simon.macias@riseup.net</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal pour sélection de période -->
+                <div class="modal fade" id="periodModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Sélection de la période</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Date de début</label>
+                                        <input type="date" class="form-control" v-model="exportPeriod.start">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Date de fin</label>
+                                        <input type="date" class="form-control" v-model="exportPeriod.end">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                <button type="button" class="btn btn-primary" @click="confirmExport">Exporter</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Chargement des scripts -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.2/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+    
+    <!-- Notre application -->
     <script>
-        const { createApp } = Vue
+        // Configuration Supabase
+        const supabaseUrl = 'https://wetwafvvzwqtjmtfzmap.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndldHdhZnZ2endxdGptdGZ6bWFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg2ODM1NjEsImV4cCI6MjA1NDI1OTU2MX0.fuUDGoJgOIoAiaOyof1hCIEQpkmCJfm2Vt2KAkAg3Iw'
+        const { createClient } = supabase
+        const supabaseClient = createClient(supabaseUrl, supabaseKey)
 
-        createApp({
+        // Service de données
+        const dataService = {
+            // Charger tous les adhérents
+            async loadMembers() {
+                const { data, error } = await supabaseClient
+                    .from('members')
+                    .select('*')
+                    .order('nom')
+                
+                if (error) throw error
+
+                // Convertir les noms de colonnes de Supabase vers le format de l'application
+                return (data || []).map(member => ({
+                    id: member.id,
+                    nom: member.nom,
+                    prenom: member.prenom,
+                    email: member.email,
+                    datenaissance: member.datenaissance,
+                    genre: member.genre,
+                    ville: member.ville,
+                    code_postal: member.code_postal,
+                    telephone: member.telephone,
+                    dateadhesion: member.dateadhesion,
+                    formuleadhesion: member.formuleadhesion,
+                    montantcotisation: member.montantcotisation,
+                    enfants: member.enfants,
+                    historique: member.historique || [],
+                    created_at: member.created_at,
+                    updated_at: member.updated_at
+                }));
+            },
+
+            // Sauvegarder un adhérent
+            async saveMember(member) {
+                if (!member) {
+                    throw new Error('Membre invalide: ne peut pas être null')
+                }
+
+                // Préparer les données pour Supabase
+                const memberData = {
+                    nom: member.nom,
+                    prenom: member.prenom,
+                    email: member.email,
+                    datenaissance: member.datenaissance,
+                    genre: member.genre,
+                    ville: member.ville,
+                    code_postal: member.code_postal,
+                    telephone: member.telephone,
+                    dateadhesion: member.dateadhesion,
+                    formuleadhesion: member.formuleadhesion,
+                    montantcotisation: member.montantcotisation,
+                    enfants: member.enfants || 0,
+                    historique: member.historique || [],
+                    updated_at: new Date().toISOString()
+                }
+
+                try {
+                    if (member.id) {
+                        // Mise à jour
+                        const { data, error } = await supabaseClient
+                            .from('members')
+                            .update(memberData)
+                            .eq('id', member.id)
+                            .select()
+                        
+                        if (error) throw error
+                        return data[0]
+                    } else {
+                        // Création
+                        memberData.created_at = new Date().toISOString()
+                        const { data, error } = await supabaseClient
+                            .from('members')
+                            .insert([memberData])
+                            .select()
+                        
+                        if (error) throw error
+                        return data[0]
+                    }
+                } catch (error) {
+                    console.error('Erreur Supabase:', error)
+                    throw error
+                }
+            },
+
+            // Supprimer un adhérent
+            async deleteMember(id) {
+                const { error } = await supabaseClient
+                    .from('members')
+                    .delete()
+                    .eq('id', id)
+                
+                if (error) throw error
+            },
+
+            // Rechercher des membres
+            async searchMembers(query) {
+                if (!query || query.length < 2) return []
+
+                const { data, error } = await supabaseClient
+                    .from('members')
+                    .select('*')
+                    .or(`nom.ilike.%${query}%,prenom.ilike.%${query}%,email.ilike.%${query}%`)
+                    .limit(5)
+
+                if (error) throw error
+                return data || []
+            },
+
+            // Rechercher des villes (utilise l'API gouvernementale française)
+            async searchVilles(query) {
+                if (!query || query.length < 2) return []
+
+                try {
+                    const response = await fetch(
+                        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&type=municipality&limit=5`
+                    )
+                    const data = await response.json()
+                    
+                    return data.features.map(feature => ({
+                        nom: feature.properties.city,
+                        code: feature.properties.postcode,
+                        coordinates: feature.geometry.coordinates
+                    }))
+                } catch (error) {
+                    console.error('Erreur lors de la recherche de villes:', error)
+                    return []
+                }
+            }
+        }
+        
+        const { createApp } = Vue
+        
+        const app = createApp({
             data() {
                 return {
                     isAuthenticated: false,
                     password: '',
                     authError: false,
+                    authModal: null,
                     members: [],
+                    statistics: [
+                        { label: 'Total Adhérents', value: 0 },
+                        { label: 'Cotisations à jour', value: 0 },
+                        { label: 'Nouveaux (2024)', value: 0 },
+                        { label: 'Taux renouvellement', value: '0%' }
+                    ],
+                    villeCoordinates: {
+                        'Ligugé': { lat: 46.5333, lon: 0.3, code: '86240' },
+                        'Poitiers': { lat: 46.5802, lon: 0.3404, code: '86000' },
+                        'Smarves': { lat: 46.5167, lon: 0.3667, code: '86240' },
+                        'Saint-Benoit': { lat: 46.5500, lon: 0.3667, code: '86280' },
+                        'Buxerolles': { lat: 46.6000, lon: 0.3500, code: '86180' },
+                        'Iteuil': { lat: 46.4833, lon: 0.3167, code: '86240' },
+                        'Migné-Auxances': { lat: 46.6167, lon: 0.3000, code: '86440' },
+                        'Château-Larcher': { lat: 46.4167, lon: 0.3167, code: '86370' },
+                        'Vivonne': { lat: 46.4333, lon: 0.2667, code: '86370' },
+                        'Gençay': { lat: 46.3708, lon: 0.4058, code: '86160' },
+                        'Montamisé': { lat: 46.6167, lon: 0.4000, code: '86360' },
+                        'Nantes': { lat: 47.2184, lon: -1.5536, code: '44000' },
+                        'Bordeaux': { lat: 44.8378, lon: -0.5792, code: '33000' },
+                        'Paris': { lat: 48.8566, lon: 2.3522, code: '75000' },
+                        'Bruxelles': { lat: 50.8503, lon: 4.3517, code: '1000' },
+                        'Cherves': { lat: 46.7500, lon: 0.2167, code: '86170' },
+                        'Avanton': { lat: 46.6500, lon: 0.2833, code: '86170' },
+                        'Beruges': { lat: 46.5667, lon: 0.2500, code: '86190' },
+                        'Bonnes': { lat: 46.4500, lon: 0.5167, code: '86300' },
+                        'Dissay': { lat: 46.6833, lon: 0.3833, code: '86130' },
+                        'Lezay': { lat: 46.2667, lon: -0.0167, code: '79120' },
+                        'Magné': { lat: 46.3167, lon: -0.5833, code: '79460' },
+                        'Marçay': { lat: 46.4500, lon: 0.2833, code: '86370' },
+                        'Marnay': { lat: 46.3833, lon: 0.3000, code: '86160' },
+                        'Moncontour': { lat: 46.8833, lon: 0.0167, code: '86330' },
+                        'Nouaillé-Maupertuis': { lat: 46.5167, lon: 0.4167, code: '86340' },
+                        'Les Roches-Prémarie-Andillé': { lat: 46.4833, lon: 0.4167, code: '86340' },
+                        'Saint-Sauvant': { lat: 46.3667, lon: 0.1833, code: '86600' },
+                        'Valdivienne': { lat: 46.5167, lon: 0.5833, code: '86300' },
+                        "L'Alpe d'Huez": { lat: 45.0922, lon: 6.0677, code: '38750' }
+                    },
                     currentMember: null,
+                    modalInstance: null,
                     searchQuery: '',
                     activeFilter: 'tous',
                     activeTab: 'adherents',
-                    statistics: [],
-                    formErrors: [],
-                    similarMembers: [],
-                    searchResults: [],
+                    charts: {
+                        formules: null,
+                        evolution: null,
+                        villes: null,
+                        ages: null,
+                        cotisations: null,
+                        agesChart: null
+                    },
+                    map: null,
+                    markers: [],
                     villeSearch: '',
                     villeResults: [],
-                    formules: [
-                        { value: "J'adhère", label: "J'adhère (5€ ou plus)" },
-                        { value: "J'adore", label: "J'adore (15€ ou plus)" },
-                        { value: "J'accélère", label: "J'accélère (20€ ou plus)" },
-                        { value: "Passage", label: "Passage (Prix libre)" }
-                    ],
+                    searchTimeout: null,
+                    similarMembers: [],
+                    formErrors: [],
+                    showErrorModal: false,
+                    searchResults: [],
+                    fileHandle: null,
                     exportPeriod: {
-                        start: '',
-                        end: ''
-                    }
+                        start: new Date().toISOString().split('T')[0],
+                        end: new Date().toISOString().split('T')[0],
+                        format: null
+                    },
+                    periodModalInstance: null,
+                }
+            },
+            mounted() {
+                // Vérifier si déjà authentifié dans cette session
+                this.isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true';
+                
+                // Si non authentifié, afficher le modal
+                if (!this.isAuthenticated) {
+                    this.authModal = new bootstrap.Modal(document.getElementById('authModal'));
+                    this.authModal.show();
+                } else {
+                    // Si authentifié, charger les données
+                    this.loadData();
+                }
+                
+                // Initialiser les graphiques si on est sur l'onglet stats
+                if (this.activeTab === 'stats') {
+                    this.$nextTick(() => this.updateCharts());
                 }
             },
             computed: {
+                currentYear() {
+                    return new Date().getFullYear();
+                },
+                formules() {
+                    return [
+                        { value: "J'adhère", label: "J'adhère (5€ ou +)" },
+                        { value: "J'adore", label: "J'adore (15€ ou +)" },
+                        { value: "J'accélère", label: "J'accélère (20€ ou +)" },
+                        { value: "Passage", label: "Passage (Prix Libre)" }
+                    ];
+                },
                 filteredMembers() {
-                    if (!this.members) return [];
+                    let result = this.members.map(member => {
+                        // Trouver la date de dernière cotisation
+                        const lastAdhesionDate = member.historique && member.historique.length > 0 
+                            ? Math.max(...member.historique.map(h => new Date(h.date).getTime()))
+                            : 0;
+                        
+                        return {
+                            ...member,
+                            cotisationAJour: this.isCotisationAJour(member),
+                            lastAdhesionDate
+                        };
+                    });
                     
-                    let result = this.members;
-                    
-                    // Filtre de recherche
-                    if (this.searchQuery) {
-                        const query = this.searchQuery.toLowerCase();
-                        result = result.filter(member => 
-                            member.nom?.toLowerCase().includes(query) ||
-                            member.prenom?.toLowerCase().includes(query) ||
-                            member.email?.toLowerCase().includes(query) ||
-                            member.ville?.toLowerCase().includes(query)
-                        );
-                    }
-                    
-                    // Filtre de cotisation
+                    // Appliquer le filtre actif
                     if (this.activeFilter === 'cotisation') {
                         result = result.filter(member => member.cotisationAJour);
                     } else if (this.activeFilter === 'retard') {
                         result = result.filter(member => !member.cotisationAJour);
                     }
                     
+                    // Appliquer la recherche textuelle
+                    if (this.searchQuery) {
+                        const query = this.searchQuery.toLowerCase().trim();
+                        result = result.filter(member => {
+                            const searchableFields = [
+                                member.nom,
+                                member.prenom,
+                                member.email,
+                                member.ville,
+                                member.telephone,
+                                member.formuleadhesion
+                            ].map(field => (field || '').toLowerCase());
+                            
+                            return searchableFields.some(field => field.includes(query));
+                        });
+                    }
+                    
+                    // Trier par date de dernière cotisation décroissante
+                    result.sort((a, b) => b.lastAdhesionDate - a.lastAdhesionDate);
+                    
                     return result;
+                },
+                topContributeurs() {
+                    return this.members
+                        .map(member => {
+                            const total = member.historique.reduce((sum, adh) => sum + adh.montant, 0);
+                            return {
+                                nom: member.prenom + ' ' + member.nom,
+                                total: total,
+                                nbAdhesions: member.historique.length
+                            };
+                        })
+                        .sort((a, b) => b.total - a.total)
+                        .slice(0, 5);
+                },
+                ageDistribution() {
+                    const currentYear = new Date().getFullYear();
+                    const distribution = {
+                        'Moins de 18 ans': { count: 0, percentage: 0 },
+                        '18-24 ans': { count: 0, percentage: 0 },
+                        '25-34 ans': { count: 0, percentage: 0 },
+                        '35-44 ans': { count: 0, percentage: 0 },
+                        '45-54 ans': { count: 0, percentage: 0 },
+                        '55-64 ans': { count: 0, percentage: 0 },
+                        '65 ans et plus': { count: 0, percentage: 0 }
+                    };
+
+                    let totalPersonnes = 0;
+
+                    // Compter les adhérents
+                    this.members.forEach(member => {
+                        if (member.datenaissance) {
+                            const age = currentYear - parseInt(member.datenaissance);
+                            if (age >= 0) { // Vérifier que l'âge est valide
+                                if (age < 18) distribution['Moins de 18 ans'].count++;
+                                else if (age < 25) distribution['18-24 ans'].count++;
+                                else if (age < 35) distribution['25-34 ans'].count++;
+                                else if (age < 45) distribution['35-44 ans'].count++;
+                                else if (age < 55) distribution['45-54 ans'].count++;
+                                else if (age < 65) distribution['55-64 ans'].count++;
+                                else distribution['65 ans et plus'].count++;
+                                totalPersonnes++;
+                            }
+                        }
+
+                        // Ajouter les enfants mineurs déclarés
+                        if (member.enfants && member.enfants > 0) {
+                            distribution['Moins de 18 ans'].count += parseInt(member.enfants);
+                            totalPersonnes += parseInt(member.enfants);
+                        }
+                    });
+
+                    // Calculer les pourcentages
+                    if (totalPersonnes > 0) {
+                        Object.keys(distribution).forEach(tranche => {
+                            distribution[tranche].percentage = Math.round((distribution[tranche].count / totalPersonnes) * 100);
+                        });
+                    }
+
+                    return distribution;
+                }
+            },
+            watch: {
+                activeTab(newTab) {
+                    if (newTab === 'stats') {
+                        this.$nextTick(() => {
+                            this.updateStatistics();
+                            this.updateCharts();
+                            this.initMap();
+                        });
+                    }
                 }
             },
             methods: {
-                login() {
+                async loadData() {
+                    try {
+                        const data = await dataService.loadMembers();
+                        this.members = data.map(this.migrateOldData);
+                        this.updateStatistics();
+                        if (this.activeTab === 'stats') {
+                            this.$nextTick(() => {
+                                this.updateCharts();
+                                this.initMap();
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Erreur lors du chargement des données:', error);
+                        alert('Erreur lors du chargement des données. Veuillez réessayer.');
+                        this.members = [];
+                    }
+                },
+                async saveData() {
+                    try {
+                        // Si on a des membres à sauvegarder en lot
+                        if (Array.isArray(this.members)) {
+                            for (const member of this.members) {
+                                if (member && member.nom && member.prenom) {
+                                    await dataService.saveMember(member);
+                                }
+                            }
+                        }
+                        // Si on a un membre individuel à sauvegarder
+                        else if (this.currentMember && this.currentMember.nom && this.currentMember.prenom) {
+                            await dataService.saveMember(this.currentMember);
+                        }
+                        
+                        await this.loadData(); // Recharger les données
+                        this.updateStatistics();
+                        if (this.activeTab === 'stats') {
+                            this.$nextTick(() => this.updateCharts());
+                        }
+                    } catch (error) {
+                        console.error('Erreur lors de la sauvegarde:', error);
+                        alert('Erreur lors de la sauvegarde des données. Veuillez réessayer.');
+                    }
+                },
+                async deleteMember(member) {
+                    if (confirm('Êtes-vous sûr de vouloir supprimer cet adhérent ?')) {
+                        try {
+                            await dataService.deleteMember(member.id);
+                            await this.loadData(); // Recharger les données
+                        } catch (error) {
+                            console.error('Erreur lors de la suppression:', error);
+                            alert('Erreur lors de la suppression. Veuillez réessayer.');
+                        }
+                    }
+                },
+                isCotisationAJour(member) {
+                    const currentYear = new Date().getFullYear();
+                    
+                    // Vérifier si l'adhérent a une cotisation pour l'année en cours
+                    if (!member.historique || !Array.isArray(member.historique)) {
+                        return false;
+                    }
+
+                    return member.historique.some(adhesion => {
+                        const adhesionYear = new Date(adhesion.date).getFullYear();
+                        return adhesionYear === currentYear;
+                    });
+                },
+                updateStatistics() {
+                    const currentYear = new Date().getFullYear();
+                    
+                    // Total des adhérents
+                    const totalMembers = this.members.length;
+                    
+                    // Cotisations à jour (adhésions de l'année en cours)
+                    const upToDate = this.members.filter(m => this.isCotisationAJour(m)).length;
+                    
+                    // Nouveaux adhérents (première adhésion cette année)
+                    const newMembers = this.members.filter(m => {
+                        if (!m.historique || !m.historique.length) return false;
+                        const premiereAdhesion = m.historique[m.historique.length - 1].date;
+                        return new Date(premiereAdhesion).getFullYear() === currentYear;
+                    }).length;
+                    
+                    // Taux de renouvellement
+                    const lastYearMembers = this.members.filter(m => {
+                        if (!m.historique || !m.historique.length) return false;
+                        return m.historique.some(h => {
+                            const adhesionYear = new Date(h.date).getFullYear();
+                            return adhesionYear === currentYear - 1;
+                        });
+                    }).length;
+                    
+                    const renewalRate = lastYearMembers ? Math.round((upToDate / lastYearMembers) * 100) : 0;
+
+                    // Mise à jour des statistiques
+                    this.statistics = [
+                        { label: 'Total Adhérents', value: totalMembers },
+                        { label: 'Cotisations à jour', value: upToDate },
+                        { label: `Nouveaux (${currentYear})`, value: newMembers },
+                        { label: 'Taux renouvellement', value: `${renewalRate}%` }
+                    ];
+                },
+                migrateOldData(member) {
+                    // Si l'historique est un tableau de strings (ancien format)
+                    if (Array.isArray(member.historique) && member.historique.length > 0 && typeof member.historique[0] === 'string') {
+                        const oldHistorique = [...member.historique];
+                        member.historique = oldHistorique.map(annee => ({
+                            date: `${annee}-01-01`,
+                            formule: member.formuleadhesion || "J'adhère",
+                            montant: member.montantcotisation || 5
+                        }));
+                    }
+                    return member;
+                },
+                async handleXLSImport(event) {
+                    try {
+                        const file = event.target.files[0];
+                        if (!file) return;
+
+                        const data = await file.arrayBuffer();
+                        const workbook = XLSX.read(data);
+                        
+                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                        
+                        // Vérification des doublons
+                        const newMembers = jsonData.filter(member => {
+                            const isDuplicate = this.members.some(existing => 
+                                existing.nom?.toLowerCase() === member.nom?.toLowerCase() &&
+                                existing.prenom?.toLowerCase() === member.prenom?.toLowerCase() &&
+                                existing.datenaissance === member.datenaissance
+                            );
+                            return !isDuplicate;
+                        });
+                        
+                        // Ajouter les nouveaux membres
+                        for (const member of newMembers) {
+                            try {
+                                await dataService.saveMember(member);
+                            } catch (error) {
+                                console.error('Erreur lors de la sauvegarde du membre:', error);
+                            }
+                        }
+                        await this.loadData();
+                        alert(`${newMembers.length} nouveaux membres importés`);
+                        
+                        event.target.value = '';
+                    } catch (error) {
+                        alert('Erreur lors de l\'import XLS: ' + error.message);
+                    }
+                },
+                
+                async handleJSONImport(event) {
+                    try {
+                        const file = event.target.files[0];
+                        if (!file) {
+                            alert('Aucun fichier sélectionné');
+                            return;
+                        }
+
+                        const reader = new FileReader();
+                        
+                        reader.onload = async (e) => {
+                            try {
+                                let jsonData = JSON.parse(e.target.result);
+                                
+                                // Si les données sont directement un tableau, les encapsuler
+                                if (Array.isArray(jsonData)) {
+                                    jsonData = { members: jsonData };
+                                }
+                                
+                                // Vérifier la structure du JSON
+                                if (!jsonData.members || !Array.isArray(jsonData.members)) {
+                                    throw new Error('Format JSON invalide. Le fichier doit contenir une propriété "members" qui est un tableau ou être directement un tableau de membres.');
+                                }
+                                
+                                let updatedCount = 0;
+                                let newCount = 0;
+                                
+                                // Traiter chaque membre du fichier importé
+                                for (const importedMember of jsonData.members) {
+                                    if (!importedMember.nom || !importedMember.prenom) {
+                                        console.warn('Membre ignoré - données manquantes:', importedMember);
+                                        continue;
+                                    }
+
+                                    // Rechercher un membre existant
+                                    const existingMember = this.members.find(existing => 
+                                        existing.nom?.toLowerCase() === importedMember.nom?.toLowerCase() &&
+                                        existing.prenom?.toLowerCase() === importedMember.prenom?.toLowerCase() &&
+                                        (
+                                            existing.email?.toLowerCase() === importedMember.email?.toLowerCase() ||
+                                            existing.telephone === importedMember.telephone ||
+                                            existing.datenaissance === importedMember.datenaissance
+                                        )
+                                    );
+
+                                    if (existingMember) {
+                                        // Mettre à jour l'historique du membre existant
+                                        const newHistoryEntry = {
+                                            date: importedMember.dateadhesion || new Date().toISOString().split('T')[0],
+                                            formule: importedMember.formuleadhesion || "J'adhère",
+                                            montant: parseFloat(importedMember.montantcotisation) || 5
+                                        };
+
+                                        // Vérifier si l'entrée n'existe pas déjà dans l'historique
+                                        const entryExists = existingMember.historique.some(h => 
+                                            h.date === newHistoryEntry.date &&
+                                            h.formule === newHistoryEntry.formule &&
+                                            h.montant === newHistoryEntry.montant
+                                        );
+
+                                        if (!entryExists) {
+                                            existingMember.historique.push(newHistoryEntry);
+                                            // Mettre à jour les autres informations si nécessaire
+                                            existingMember.dateadhesion = newHistoryEntry.date;
+                                            existingMember.formuleadhesion = newHistoryEntry.formule;
+                                            existingMember.montantcotisation = newHistoryEntry.montant;
+                                            existingMember.ville = importedMember.ville || existingMember.ville;
+                                            existingMember.code_postal = importedMember.code_postal || existingMember.code_postal;
+                                            existingMember.telephone = importedMember.telephone || existingMember.telephone;
+                                            existingMember.email = importedMember.email || existingMember.email;
+                                            existingMember.enfants = importedMember.enfants || existingMember.enfants;
+                                            
+                                            try {
+                                                await dataService.saveMember(existingMember);
+                                                updatedCount++;
+                                            } catch (error) {
+                                                console.error('Erreur lors de la mise à jour du membre:', error);
+                                            }
+                                        }
+                                    } else {
+                                        // Créer un nouveau membre
+                                        const newMember = {
+                                            nom: importedMember.nom,
+                                            prenom: importedMember.prenom,
+                                            email: importedMember.email || '',
+                                            datenaissance: importedMember.datenaissance || new Date().getFullYear() - 20,
+                                            genre: importedMember.genre || '',
+                                            ville: importedMember.ville || '',
+                                            code_postal: importedMember.code_postal || '',
+                                            telephone: importedMember.telephone || '',
+                                            dateadhesion: importedMember.dateadhesion || new Date().toISOString().split('T')[0],
+                                            formuleadhesion: importedMember.formuleadhesion || "J'adhère",
+                                            montantcotisation: parseFloat(importedMember.montantcotisation) || 5,
+                                            enfants: parseInt(importedMember.enfants) || 0,
+                                            historique: [{
+                                                date: importedMember.dateadhesion || new Date().toISOString().split('T')[0],
+                                                formule: importedMember.formuleadhesion || "J'adhère",
+                                                montant: parseFloat(importedMember.montantcotisation) || 5
+                                            }]
+                                        };
+
+                                        try {
+                                            await dataService.saveMember(newMember);
+                                            newCount++;
+                                        } catch (error) {
+                                            console.error('Erreur lors de la création du membre:', error);
+                                        }
+                                    }
+                                }
+                                
+                                await this.loadData();
+                                alert(`Import terminé : ${newCount} nouveaux membres créés, ${updatedCount} membres mis à jour.`);
+                            } catch (error) {
+                                console.error('Erreur lors du traitement JSON:', error);
+                                alert('Erreur: ' + error.message);
+                            }
+                        };
+                        
+                        reader.onerror = (error) => {
+                            console.error('Erreur de lecture du fichier:', error);
+                            alert('Erreur lors de la lecture du fichier');
+                        };
+                        
+                        reader.readAsText(file);
+                        event.target.value = ''; // Réinitialiser l'input file
+                    } catch (error) {
+                        console.error('Erreur lors de l\'import JSON:', error);
+                        alert('Erreur: ' + error.message);
+                    }
+                },
+                
+                async handleCSVImport(event) {
+                    try {
+                        const file = event.target.files[0];
+                        if (!file) return;
+
+                        const reader = new FileReader();
+                        
+                        reader.onload = async (e) => {
+                            try {
+                                const csvText = e.target.result;
+                                const lines = csvText.split('\n').map(line => line.trim()).filter(line => line);
+                                
+                                // Ignorer les deux premières lignes (en-tête et ligne de description)
+                                const dataLines = lines.slice(2);
+                                
+                                const newMembers = dataLines.map((line, index) => {
+                                    const columns = line.split(',').map(col => col.trim());
+                                    
+                                    // Extraire le nombre d'enfants du champ genre
+                                    let enfants = 0;
+                                    let genre = columns[5] || '';
+                                    if (genre.includes('+')) {
+                                        const match = genre.match(/\+(\d+)/);
+                                        if (match) {
+                                            enfants = parseInt(match[1]);
+                                            genre = genre.split('+')[0].trim();
+                                        }
+                                    }
+
+                                    // Extraire le montant de cotisation
+                                    const montantcotisation = parseFloat(columns[6]) || 0;
+
+                                    return {
+                                        id: Date.now() + index,
+                                        ville: columns[0] || '',
+                                        datenaissance: parseInt(columns[1]) || new Date().getFullYear(),
+                                        nom: (columns[2] || '').split(' ')[0] || '',
+                                        prenom: (columns[2] || '').split(' ').slice(1).join(' ') || '',
+                                        email: columns[3] || '',
+                                        telephone: columns[4] || '',
+                                        genre: genre,
+                                        montantcotisation: montantcotisation,
+                                        formuleadhesion: columns[7] || '',
+                                        dateadhesion: '2025-01-01',
+                                        enfants: enfants,
+                                        historique: [{
+                                            date: '2025-01-01',
+                                            formule: 'J\'adhère',
+                                            montant: 5
+                                        }]
+                                    };
+                                });
+
+                                // Vérification des doublons
+                                const membersToAdd = newMembers.filter(member => {
+                                    const isDuplicate = this.members.some(existing => 
+                                        existing.nom?.toLowerCase() === member.nom?.toLowerCase() &&
+                                        existing.prenom?.toLowerCase() === member.prenom?.toLowerCase() &&
+                                        existing.datenaissance === member.datenaissance
+                                    );
+                                    return !isDuplicate;
+                                });
+
+                                // Ajouter les nouveaux membres
+                                for (const member of membersToAdd) {
+                                    try {
+                                        await dataService.saveMember(member);
+                                    } catch (error) {
+                                        console.error('Erreur lors de la sauvegarde du membre:', error);
+                                    }
+                                }
+                                await this.loadData();
+                                alert(`${membersToAdd.length} nouveaux membres importés`);
+                                
+                            } catch (error) {
+                                alert('Erreur lors du parsing CSV: ' + error.message);
+                            }
+                        };
+                        
+                        reader.readAsText(file);
+                        event.target.value = '';
+                    } catch (error) {
+                        alert('Erreur lors de l\'import CSV: ' + error.message);
+                    }
+                },
+                
+                startExport(format) {
+                    this.exportPeriod.format = format;
+                    this.exportPeriod.start = new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
+                    this.exportPeriod.end = new Date().toISOString().split('T')[0];
+                    
+                    if (!this.periodModalInstance) {
+                        this.periodModalInstance = new bootstrap.Modal(document.getElementById('periodModal'));
+                    }
+                    this.periodModalInstance.show();
+                },
+
+                confirmExport() {
+                    const startDate = new Date(this.exportPeriod.start);
+                    const endDate = new Date(this.exportPeriod.end);
+                    
+                    // Filtrer les membres selon la période
+                    const filteredMembers = this.members.filter(member => {
+                        return member.historique.some(adhesion => {
+                            const adhesionDate = new Date(adhesion.date);
+                            return adhesionDate >= startDate && adhesionDate <= endDate;
+                        });
+                    });
+
+                    // Exporter selon le format choisi
+                    switch (this.exportPeriod.format) {
+                        case 'xls':
+                            this.exportXLS(filteredMembers);
+                            break;
+                        case 'json':
+                            this.exportJSON(filteredMembers);
+                            break;
+                        case 'csv':
+                            this.exportCSV(filteredMembers);
+                            break;
+                    }
+
+                    this.periodModalInstance.hide();
+                },
+
+                exportXLS(members) {
+                    const worksheet = XLSX.utils.json_to_sheet(members);
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(workbook, worksheet, "Adhérents");
+                    
+                    const fileName = `adherents_${this.exportPeriod.start}_${this.exportPeriod.end}.xlsx`;
+                    XLSX.writeFile(workbook, fileName);
+                },
+
+                exportJSON(members) {
+                    const jsonData = { 
+                        period: {
+                            start: this.exportPeriod.start,
+                            end: this.exportPeriod.end
+                        },
+                        members: members 
+                    };
+                    const jsonString = JSON.stringify(jsonData, null, 2);
+                    const blob = new Blob([jsonString], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `adherents_${this.exportPeriod.start}_${this.exportPeriod.end}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                },
+
+                exportCSV(members) {
+                    const csvData = [
+                        ['Nom', 'Prénom', 'Email', 'Ville', 'Formule', 'Cotisation', 'Date d\'adhésion', 'Date de naissance', 'Genre', 'Téléphone', 'Nombre d\'enfants', 'Historique'],
+                        ...members.map(member => [
+                            member.nom,
+                            member.prenom,
+                            member.email,
+                            member.ville,
+                            member.formuleadhesion,
+                            member.montantcotisation.toFixed(2) + '€',
+                            member.dateadhesion,
+                            member.datenaissance,
+                            member.genre,
+                            member.telephone,
+                            member.enfants,
+                            member.historique
+                                .filter(adh => {
+                                    const adhesionDate = new Date(adh.date);
+                                    return adhesionDate >= new Date(this.exportPeriod.start) && 
+                                           adhesionDate <= new Date(this.exportPeriod.end);
+                                })
+                                .map(adh => `${adh.date} - ${adh.formule} - ${adh.montant}€`)
+                                .join('; ')
+                        ])
+                    ];
+                    
+                    const csvContent = csvData.map(row => row.join(',')).join('\n');
+                    const blob = new Blob([csvContent], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `adherents_${this.exportPeriod.start}_${this.exportPeriod.end}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                },
+                editMember(member) {
+                    // Réinitialiser les erreurs et les résultats de recherche
+                    this.formErrors = [];
+                    this.searchResults = [];
+                    this.similarMembers = [];
+                    
+                    this.currentMember = { ...member };
+                    this.villeSearch = member.ville && member.code_postal ? `${member.ville} (${member.code_postal})` : '';
+                    
+                    // Nettoyer tout backdrop existant avant d'ouvrir la nouvelle modale
+                    const backdrops = document.querySelectorAll('.modal-backdrop');
+                    backdrops.forEach(backdrop => backdrop.remove());
+                    document.body.classList.remove('modal-open');
+                    
+                    this.modalInstance = new bootstrap.Modal(document.getElementById('memberModal'));
+                    this.modalInstance.show();
+                },
+                async saveMember() {
+                    if (!this.validateMember()) {
+                        return;
+                    }
+
+                    try {
+                        await dataService.saveMember(this.currentMember);
+                        await this.loadData();
+                        this.modalInstance.hide();
+                        
+                        if (this.activeTab === 'stats') {
+                            this.$nextTick(() => this.updateCharts());
+                        }
+                    } catch (error) {
+                        console.error('Erreur lors de la sauvegarde:', error);
+                        alert('Erreur lors de la sauvegarde. Veuillez réessayer.');
+                    }
+                },
+                showAddModal() {
+                    // Réinitialiser les erreurs et les résultats de recherche
+                    this.formErrors = [];
+                    this.searchResults = [];
+                    this.similarMembers = [];
+                    
+                    this.currentMember = {
+                        id: null,
+                        nom: '',
+                        prenom: '',
+                        email: '',
+                        datenaissance: new Date().getFullYear() - 20,
+                        genre: '',
+                        ville: '',
+                        code_postal: '',
+                        coordinates: null,
+                        telephone: '',
+                        dateadhesion: new Date().toISOString().split('T')[0],
+                        formuleadhesion: "J'adhère",
+                        montantcotisation: 5,
+                        enfants: 0,
+                        cotisationAJour: true,
+                        historique: [] // Historique vide à la création
+                    };
+                    this.villeSearch = '';
+                    this.modalInstance = new bootstrap.Modal(document.getElementById('memberModal'));
+                    this.modalInstance.show();
+                },
+                updateMontantCotisation() {
+                    const montants = {
+                        "J'adhère": 5,
+                        "J'adore": 15,
+                        "J'accélère": 20,
+                        "Passage": 1
+                    };
+                    
+                    const formule = this.formules.find(f => f.value === this.currentMember.formuleadhesion);
+                    if (formule) {
+                        this.currentMember.montantcotisation = montants[formule.value];
+                    }
+                },
+                normalizeFormule(formule) {
+                    if (!formule) return '';
+                    // Supprimer les accents et mettre en minuscules
+                    return formule.normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g, '')
+                        .toLowerCase()
+                        .replace(/[^a-z]/g, '');
+                },
+                updateCharts() {
+                    // Répartition par formule
+                    const formulesData = {};
+                    this.members.forEach(member => {
+                        const formuleNormalisee = this.normalizeFormule(member.formuleadhesion);
+                        let formuleAffichee = member.formuleadhesion;
+                        
+                        // Mapping des formules normalisées vers les formules d'affichage
+                        switch (formuleNormalisee) {
+                            case 'jadhere':
+                                formuleAffichee = "J'adhère (5€)";
+                                break;
+                            case 'jadore':
+                                formuleAffichee = "J'adore (15€)";
+                                break;
+                            case 'jaccelere':
+                                formuleAffichee = "J'accélère (20€)";
+                                break;
+                            case 'passage':
+                                formuleAffichee = "Passage (1€)";
+                                break;
+                        }
+                        
+                        formulesData[formuleAffichee] = (formulesData[formuleAffichee] || 0) + 1;
+                    });
+
+                    if (this.charts.formules) {
+                        this.charts.formules.destroy();
+                    }
+                    this.charts.formules = new Chart(this.$refs.formulesChart, {
+                        type: 'pie',
+                        data: {
+                            labels: Object.keys(formulesData),
+                            datasets: [{
+                                data: Object.values(formulesData),
+                                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0']
+                            }]
+                        },
+                        options: {
+                            plugins: {
+                                legend: {
+                                    position: 'right'
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const label = context.label || '';
+                                            const value = context.raw || 0;
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = Math.round((value / total) * 100);
+                                            return `${label}: ${value} (${percentage}%)`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    // Répartition par genre
+                    const genreData = {
+                        'Femmes': this.members.filter(m => m.genre === 'F').length,
+                        'Hommes': this.members.filter(m => m.genre === 'H').length,
+                        'Autres': this.members.filter(m => m.genre === 'A').length
+                    };
+
+                    if (this.charts.genre) {
+                        this.charts.genre.destroy();
+                    }
+                    this.charts.genre = new Chart(this.$refs.genreChart, {
+                        type: 'pie',
+                        data: {
+                            labels: Object.keys(genreData),
+                            datasets: [{
+                                data: Object.values(genreData),
+                                backgroundColor: ['#FF69B4', '#4169E1', '#9370DB']
+                            }]
+                        },
+                        options: {
+                            plugins: {
+                                legend: {
+                                    position: 'right'
+                                }
+                            }
+                        }
+                    });
+
+                    // Évolution des adhésions
+                    const evolutionData = {};
+                    
+                    // Initialiser les années
+                    const currentYear = new Date().getFullYear();
+                    const startYear = currentYear - 4; // 5 dernières années
+                    for (let year = startYear; year <= currentYear; year++) {
+                        evolutionData[year] = 0;
+                    }
+
+                    // Compter les adhésions par année
+                    this.members.forEach(member => {
+                        if (member.historique && Array.isArray(member.historique)) {
+                            member.historique.forEach(adhesion => {
+                                const annee = new Date(adhesion.date).getFullYear();
+                                if (annee >= startYear && annee <= currentYear) {
+                                    evolutionData[annee] = (evolutionData[annee] || 0) + 1;
+                                }
+                            });
+                        }
+                    });
+
+                    if (this.charts.evolution) {
+                        this.charts.evolution.destroy();
+                    }
+                    this.charts.evolution = new Chart(this.$refs.evolutionChart, {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(evolutionData),
+                            datasets: [{
+                                label: 'Nombre d\'adhésions',
+                                data: Object.values(evolutionData),
+                                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Évolution du nombre d\'adhésions par année'
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return `${context.parsed.y} adhésion(s) en ${context.label}`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    // Évolution des cotisations
+                    const cotisationsData = {};
+                    this.members.forEach(member => {
+                        member.historique.forEach(adhesion => {
+                            const annee = adhesion.date.split('-')[0];
+                            cotisationsData[annee] = (cotisationsData[annee] || 0) + adhesion.montant;
+                        });
+                    });
+
+                    if (this.charts.cotisations) {
+                        this.charts.cotisations.destroy();
+                    }
+                    this.charts.cotisations = new Chart(this.$refs.cotisationsChart, {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(cotisationsData).sort(),
+                            datasets: [{
+                                label: 'Montant total des cotisations (€)',
+                                data: Object.values(cotisationsData),
+                                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return value + '€';
+                                        }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return context.parsed.y + '€';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    // Graphique de répartition par âge
+                    const ageData = this.ageDistribution;
+                    if (this.charts.agesChart) {
+                        this.charts.agesChart.destroy();
+                    }
+                    this.charts.agesChart = new Chart(this.$refs.agesChart, {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(ageData),
+                            datasets: [{
+                                label: 'Nombre de personnes',
+                                data: Object.values(ageData).map(d => d.count),
+                                backgroundColor: [
+                                    'rgba(255, 99, 132, 0.5)',  // Rouge pour les moins de 18
+                                    'rgba(54, 162, 235, 0.5)',  // Bleu
+                                    'rgba(255, 206, 86, 0.5)',  // Jaune
+                                    'rgba(75, 192, 192, 0.5)',  // Turquoise
+                                    'rgba(153, 102, 255, 0.5)', // Violet
+                                    'rgba(255, 159, 64, 0.5)',  // Orange
+                                    'rgba(201, 203, 207, 0.5)'  // Gris
+                                ],
+                                borderColor: [
+                                    'rgb(255, 99, 132)',
+                                    'rgb(54, 162, 235)',
+                                    'rgb(255, 206, 86)',
+                                    'rgb(75, 192, 192)',
+                                    'rgb(153, 102, 255)',
+                                    'rgb(255, 159, 64)',
+                                    'rgb(201, 203, 207)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1
+                                    }
+                                }
+                            },
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const data = ageData[context.label];
+                                            return [
+                                                `Nombre: ${data.count} personne(s)`,
+                                                `Pourcentage: ${data.percentage}%`
+                                            ];
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                },
+                formatDate(dateStr) {
+                    const date = new Date(dateStr);
+                    return date.toLocaleDateString();
+                },
+                searchVilles() {
+                    if (this.searchTimeout) {
+                        clearTimeout(this.searchTimeout);
+                    }
+                    
+                    if (!this.villeSearch || this.villeSearch.length < 2) {
+                        this.villeResults = [];
+                        return;
+                    }
+                    
+                    this.searchTimeout = setTimeout(async () => {
+                        try {
+                            const response = await fetch(
+                                `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(this.villeSearch)}&type=municipality&limit=5`
+                            );
+                            
+                            if (!response.ok) {
+                                throw new Error(`Erreur HTTP: ${response.status}`);
+                            }
+                            
+                            const data = await response.json();
+                            
+                            if (!data || !data.features) {
+                                console.warn('Réponse API invalide:', data);
+                                this.villeResults = [];
+                                return;
+                            }
+                            
+                            this.villeResults = data.features.map(feature => ({
+                                nom: feature.properties.city,
+                                code: feature.properties.postcode,
+                                coordinates: feature.geometry.coordinates
+                            }));
+                        } catch (error) {
+                            console.error('Erreur lors de la recherche de ville:', error);
+                            this.villeResults = [];
+                        }
+                    }, 500);
+                },
+                selectVille(result) {
+                    this.currentMember.ville = result.nom;
+                    this.currentMember.code_postal = result.code;
+                    this.villeSearch = `${result.nom} (${result.code})`;
+                    this.villeResults = []; // Vider les résultats après sélection
+                },
+                selectMember(result) {
+                    this.currentMember.nom = result.nom;
+                    this.currentMember.prenom = result.prenom;
+                    this.currentMember.email = result.email;
+                    this.searchResults = [];
+                },
+                handleNomInput() {
+                    if (this.searchTimeout) {
+                        clearTimeout(this.searchTimeout);
+                    }
+                    this.searchTimeout = setTimeout(async () => {
+                        try {
+                            const results = await dataService.searchMembers(this.searchQuery);
+                            this.searchResults = results;
+                        } catch (error) {
+                            console.error('Erreur lors de la recherche de membre:', error);
+                            this.searchResults = [];
+                        }
+                    }, 500);
+                },
+                formatNomPrenom() {
+                    // Implémentation de la mise en forme du nom et prénom
+                },
+                ajouterAdhesion() {
+                    if (!this.currentMember.historique) {
+                        this.currentMember.historique = [];
+                    }
+                    
+                    // Utiliser la date d'adhésion du formulaire
+                    const nouvelleAdhesion = {
+                        date: this.currentMember.dateadhesion,
+                        formule: this.currentMember.formuleadhesion || "J'adhère",
+                        montant: this.currentMember.montantcotisation || 5
+                    };
+                    
+                    this.currentMember.historique.push(nouvelleAdhesion);
+                    
+                    // Trier l'historique par date décroissante
+                    this.currentMember.historique.sort((a, b) => new Date(b.date) - new Date(a.date));
+                },
+                supprimerAdhesion(index) {
+                    if (confirm('Êtes-vous sûr de vouloir supprimer cette adhésion ?')) {
+                        this.currentMember.historique.splice(index, 1);
+                        
+                        // Mettre à jour la date d'adhésion avec la date la plus récente
+                        if (this.currentMember.historique.length > 0) {
+                            const derniereAdhesion = this.currentMember.historique[0];
+                            this.currentMember.dateadhesion = derniereAdhesion.date;
+                        } else {
+                            this.currentMember.dateadhesion = null;
+                        }
+                    }
+                },
+                validateMember() {
+                    this.formErrors = [];
+                    
+                    // Validation des champs obligatoires
+                    if (!this.currentMember.nom) {
+                        this.formErrors.push('Le nom est obligatoire');
+                    }
+                    if (!this.currentMember.prenom) {
+                        this.formErrors.push('Le prénom est obligatoire');
+                    }
+                    
+                    // Validation de l'email si présent
+                    if (this.currentMember.email && !this.validateEmail(this.currentMember.email)) {
+                        this.formErrors.push('L\'email n\'est pas valide');
+                    }
+                    
+                    // Validation de la date de naissance
+                    if (this.currentMember.datenaissance) {
+                        const annee = parseInt(this.currentMember.datenaissance);
+                        if (isNaN(annee) || annee < 1900 || annee > this.currentYear) {
+                            this.formErrors.push('L\'année de naissance n\'est pas valide');
+                        }
+                    }
+                    
+                    // Validation du nombre d'enfants
+                    if (this.currentMember.enfants < 0) {
+                        this.formErrors.push('Le nombre d\'enfants ne peut pas être négatif');
+                    }
+                    
+                    return this.formErrors.length === 0;
+                },
+                
+                validateEmail(email) {
+                    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    return re.test(email);
+                },
+                initMap() {
+                    if (!this.map) {
+                        this.map = L.map('map').setView([46.603354, 0.333333], 8);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '© OpenStreetMap contributors'
+                        }).addTo(this.map);
+                    }
+
+                    // Nettoyer les marqueurs existants
+                    this.markers.forEach(marker => marker.remove());
+                    this.markers = [];
+
+                    // Regrouper les adhérents par ville
+                    const villesData = {};
+                    this.members.forEach(member => {
+                        if (member.ville) {
+                            const villeKey = member.ville;
+                            if (!villesData[villeKey]) {
+                                villesData[villeKey] = {
+                                    ville: member.ville,
+                                    code_postal: member.code_postal,
+                                    count: 0,
+                                    formules: {},
+                                    coordinates: this.villeCoordinates[member.ville]
+                                };
+                            }
+                            villesData[villeKey].count++;
+                            const formule = member.formuleadhesion || "Non spécifiée";
+                            villesData[villeKey].formules[formule] = (villesData[villeKey].formules[formule] || 0) + 1;
+                        }
+                    });
+
+                    // Ajouter les marqueurs pour chaque ville
+                    Object.values(villesData).forEach(data => {
+                        if (data.coordinates) {
+                            const { lat, lon } = data.coordinates;
+                            
+                            // Créer le contenu du popup
+                            const formulesList = Object.entries(data.formules)
+                                .map(([formule, count]) => `${formule}: ${count}`)
+                                .join('<br>');
+                            
+                            const popupContent = `
+                                <div class="map-popup">
+                                    <h6>${data.ville} (${data.code_postal || data.coordinates.code})</h6>
+                                    <p><strong>${data.count} adhérent${data.count > 1 ? 's' : ''}</strong></p>
+                                    <div class="formules-list">
+                                        ${formulesList}
+                                    </div>
+                                </div>
+                            `;
+
+                            // Créer le marqueur avec un style personnalisé
+                            const marker = L.marker([lat, lon], {
+                                title: data.ville
+                            })
+                            .bindPopup(popupContent)
+                            .addTo(this.map);
+
+                            this.markers.push(marker);
+                        }
+                    });
+                },
+                getAdhesionsDetails(ville) {
+                    // Obtenir les détails des adhésions pour une ville
+                    const adherents = this.members.filter(m => m.ville === ville);
+                    const adhesionsParFormule = {};
+                    
+                    adherents.forEach(adherent => {
+                        if (adherent.formuleadhesion) {
+                            adhesionsParFormule[adherent.formuleadhesion] = (adhesionsParFormule[adherent.formuleadhesion] || 0) + 1;
+                        }
+                    });
+
+                    return Object.entries(adhesionsParFormule)
+                        .map(([formule, nombre]) => `${formule}: ${nombre}`)
+                        .join('<br>');
+                },
+                authenticate() {
                     if (this.password === 'BAL2025') {
                         this.isAuthenticated = true;
                         this.authError = false;
+                        this.authModal.hide();
+                        // Sauvegarder l'état d'authentification
                         sessionStorage.setItem('isAuthenticated', 'true');
+                        // Charger les données après authentification
                         this.loadData();
                     } else {
                         this.authError = true;
                     }
-                },
-                async loadData() {
-                    try {
-                        // Pour le moment, on charge les données depuis un fichier JSON statique
-                        const response = await fetch('adherents_2025_complet.json');
-                        const data = await response.json();
-                        this.members = data.members || [];
-                        this.updateStatistics();
-                    } catch (error) {
-                        console.error('Erreur lors du chargement des données:', error);
-                    }
-                },
-                updateStatistics() {
-                    // Mise à jour des statistiques de base
-                    this.statistics = [
-                        { label: 'Total Adhérents', value: this.members.length },
-                        { label: 'Cotisations à jour', value: this.members.filter(m => m.cotisationAJour).length },
-                        { label: 'Nouveaux (2024)', value: this.members.filter(m => m.dateadhesion?.includes('2024')).length },
-                        { label: 'Montant total', value: this.members.reduce((sum, m) => sum + (m.montantcotisation || 0), 0) + '€' }
-                    ];
-                }
-            },
-            mounted() {
-                this.isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true';
-                if (this.isAuthenticated) {
-                    this.loadData();
                 }
             }
-        }).mount('#app')
+        })
+        
+        app.mount('#app')
     </script>
 </body>
 </html>
