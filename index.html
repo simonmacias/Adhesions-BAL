@@ -620,7 +620,50 @@
                     currentMember: null,
                     searchQuery: '',
                     activeFilter: 'tous',
-                    activeTab: 'adherents'
+                    activeTab: 'adherents',
+                    statistics: [],
+                    formErrors: [],
+                    similarMembers: [],
+                    searchResults: [],
+                    villeSearch: '',
+                    villeResults: [],
+                    formules: [
+                        { value: "J'adhère", label: "J'adhère (5€ ou plus)" },
+                        { value: "J'adore", label: "J'adore (15€ ou plus)" },
+                        { value: "J'accélère", label: "J'accélère (20€ ou plus)" },
+                        { value: "Passage", label: "Passage (Prix libre)" }
+                    ],
+                    exportPeriod: {
+                        start: '',
+                        end: ''
+                    }
+                }
+            },
+            computed: {
+                filteredMembers() {
+                    if (!this.members) return [];
+                    
+                    let result = this.members;
+                    
+                    // Filtre de recherche
+                    if (this.searchQuery) {
+                        const query = this.searchQuery.toLowerCase();
+                        result = result.filter(member => 
+                            member.nom?.toLowerCase().includes(query) ||
+                            member.prenom?.toLowerCase().includes(query) ||
+                            member.email?.toLowerCase().includes(query) ||
+                            member.ville?.toLowerCase().includes(query)
+                        );
+                    }
+                    
+                    // Filtre de cotisation
+                    if (this.activeFilter === 'cotisation') {
+                        result = result.filter(member => member.cotisationAJour);
+                    } else if (this.activeFilter === 'retard') {
+                        result = result.filter(member => !member.cotisationAJour);
+                    }
+                    
+                    return result;
                 }
             },
             methods: {
@@ -636,21 +679,30 @@
                 },
                 async loadData() {
                     try {
-                        const { data, error } = await supabaseClient
-                            .from('members')
-                            .select('*')
-                            .order('nom');
-                        
-                        if (error) throw error;
-                        this.members = data || [];
+                        // Pour le moment, on charge les données depuis un fichier JSON statique
+                        const response = await fetch('adherents_2025_complet.json');
+                        const data = await response.json();
+                        this.members = data.members || [];
                         this.updateStatistics();
                     } catch (error) {
                         console.error('Erreur lors du chargement des données:', error);
                     }
+                },
+                updateStatistics() {
+                    // Mise à jour des statistiques de base
+                    this.statistics = [
+                        { label: 'Total Adhérents', value: this.members.length },
+                        { label: 'Cotisations à jour', value: this.members.filter(m => m.cotisationAJour).length },
+                        { label: 'Nouveaux (2024)', value: this.members.filter(m => m.dateadhesion?.includes('2024')).length },
+                        { label: 'Montant total', value: this.members.reduce((sum, m) => sum + (m.montantcotisation || 0), 0) + '€' }
+                    ];
                 }
             },
             mounted() {
                 this.isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true';
+                if (this.isAuthenticated) {
+                    this.loadData();
+                }
             }
         }).mount('#app')
     </script>
