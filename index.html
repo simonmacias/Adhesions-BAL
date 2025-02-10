@@ -43,7 +43,7 @@
                 <header class="bg-primary text-white py-3">
                     <div class="container d-flex justify-content-between align-items-center">
                         <h1 class="h3 mb-0">Gestion des Adhérents</h1>
-                        <span class="text-light small">v4.0.15</span>
+                        <span class="text-light small">v4.0.16</span>
                     </div>
                 </header>
 
@@ -305,44 +305,61 @@
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
                                 <div class="modal-body">
+                                    <!-- Affichage des erreurs -->
+                                    <div v-if="formErrors.length" class="alert alert-danger mb-3">
+                                        <h6 class="alert-heading">Erreurs à corriger :</h6>
+                                        <ul class="mb-0">
+                                            <li v-for="error in formErrors">{{ error }}</li>
+                                        </ul>
+                                    </div>
                                     <div class="row g-3">
                                         <!-- Nom -->
-                                        <div class="col-md-6">
+                                        <div class="col-md-6 position-relative">
                                             <label class="form-label">Nom *</label>
                                             <input type="text" 
-                                                   class="form-control"
-                                                   :class="{ 'is-invalid': formErrors.includes('Le nom est obligatoire') }"
-                                                   v-model="currentMember.nom"
+                                                   class="form-control" 
+                                                   v-model="currentMember.nom" 
                                                    @input="onMemberInfoChange('nom')"
-                                                   @blur="currentMember.nom = currentMember.nom.toUpperCase()">
-                                            <!-- Liste des suggestions -->
-                                            <div v-if="showSuggestions && memberSuggestions.length" 
-                                                 class="position-absolute w-100 mt-1 bg-white border rounded shadow-sm" 
-                                                 style="z-index: 1000; max-height: 200px; overflow-y: auto;">
-                                                <div v-for="member in memberSuggestions" 
-                                                     :key="member.id"
-                                                     class="dropdown-item py-2 px-3 cursor-pointer"
-                                                     @click="editMember(member)">
-                                                    <strong>{{ member.nom }} {{ member.prenom }}</strong>
-                                                    <br>
-                                                    <small class="text-muted">{{ member.ville }}</small>
-                                                </div>
+                                                   required>
+                                            <!-- Liste déroulante des suggestions (uniquement en mode ajout) -->
+                                            <div v-if="!isEditing && showSuggestions && memberSuggestions.length > 0" 
+                                                 class="dropdown-menu show position-absolute w-100" 
+                                                 style="z-index: 1000;">
+                                                <a v-for="member in memberSuggestions" 
+                                                   class="dropdown-item cursor-pointer"
+                                                   @click="selectMember(member)">
+                                                    {{ member.nom }} {{ member.prenom }}
+                                                </a>
+                                                <div class="dropdown-divider"></div>
+                                                <a class="dropdown-item text-danger cursor-pointer" 
+                                                   @click="closeSuggestions">
+                                                    Fermer la liste
+                                                </a>
                                             </div>
                                         </div>
                                         <!-- Prénom -->
                                         <div class="col-md-6">
                                             <label class="form-label">Prénom *</label>
-                                            <input type="text" 
-                                                   class="form-control"
-                                                   :class="{ 'is-invalid': formErrors.includes('Le prénom est obligatoire') }"
-                                                   v-model="currentMember.prenom"
-                                                   @input="onMemberInfoChange('prenom')"
-                                                   @blur="currentMember.prenom = currentMember.prenom.charAt(0).toUpperCase() + currentMember.prenom.slice(1).toLowerCase()">
+                                            <input type="text" class="form-control" v-model="currentMember.prenom" required>
+                                        </div>
+                                        <!-- Genre -->
+                                        <div class="col-md-6">
+                                            <label class="form-label">Genre *</label>
+                                            <select class="form-select" v-model="currentMember.genre" required>
+                                                <option value="">Sélectionnez...</option>
+                                                <option value="F">Femme</option>
+                                                <option value="H">Homme</option>
+                                            </select>
+                                        </div>
+                                        <!-- Ville -->
+                                        <div class="col-md-6">
+                                            <label class="form-label">Ville *</label>
+                                            <input type="text" class="form-control" v-model="currentMember.ville" required>
                                         </div>
                                         <!-- Email -->
                                         <div class="col-md-6">
-                                            <label class="form-label">Email</label>
-                                            <input type="email" class="form-control" v-model="currentMember.email">
+                                            <label class="form-label">Email *</label>
+                                            <input type="email" class="form-control" v-model="currentMember.email" required>
                                         </div>
                                         <!-- Téléphone -->
                                         <div class="col-md-6">
@@ -351,13 +368,14 @@
                                         </div>
                                         <!-- Date de naissance -->
                                         <div class="col-md-6">
-                                            <label class="form-label">Année de naissance</label>
+                                            <label class="form-label">Année de naissance *</label>
                                             <input type="number" 
                                                    class="form-control" 
                                                    v-model.number="currentMember.datenaissance"
                                                    :min="1900" 
                                                    :max="currentYear"
-                                                   placeholder="AAAA">
+                                                   placeholder="AAAA"
+                                                   required>
                                         </div>
                                     </div>
                                 </div>
@@ -2175,47 +2193,41 @@
                     }
                 },
                 async onMemberInfoChange(field) {
-                    if (!this.currentMember[field]) {
+                    // Ne rechercher que si le champ est 'nom'
+                    if (field !== 'nom' || !this.currentMember.nom) {
                         this.showSuggestions = false;
                         this.memberSuggestions = [];
                         return;
                     }
 
-                    // Recherche de suggestions
-                    const searchTerm = this.currentMember[field];
+                    // Recherche de suggestions uniquement sur le nom de famille
+                    const searchTerm = this.currentMember.nom;
                     const normalizedSearch = this.normalizeString(searchTerm);
                     
                     this.memberSuggestions = this.members.filter(member => {
                         const normalizedNom = this.normalizeString(member.nom || '');
-                        const normalizedPrenom = this.normalizeString(member.prenom || '');
                         
                         // Ne pas suggérer le membre en cours d'édition
                         if (this.currentMember.id && member.id === this.currentMember.id) {
                             return false;
                         }
                         
-                        // Vérifier si le terme de recherche correspond au nom ou au prénom
-                        return normalizedNom.includes(normalizedSearch) || 
-                               normalizedPrenom.includes(normalizedSearch);
+                        // Vérifier uniquement le nom de famille
+                        return normalizedNom.includes(normalizedSearch);
                     }).slice(0, 5); // Limite à 5 suggestions
 
                     this.showSuggestions = this.memberSuggestions.length > 0;
 
                     // Vérification des doublons exacts
-                    if (this.currentMember.nom && this.currentMember.prenom) {
+                    if (this.currentMember.nom) {
                         const normalizedNewNom = this.normalizeString(this.currentMember.nom);
-                        const normalizedNewPrenom = this.normalizeString(this.currentMember.prenom);
 
                         const existingMember = this.members.find(member => {
                             if (this.currentMember.id && member.id === this.currentMember.id) {
-                                return false; // Ignorer le membre en cours d'édition
+                                return false;
                             }
                             const normalizedExistingNom = this.normalizeString(member.nom || '');
-                            const normalizedExistingPrenom = this.normalizeString(member.prenom || '');
-                            
-                            // Vérification stricte de l'égalité
-                            return normalizedExistingNom === normalizedNewNom && 
-                                   normalizedExistingPrenom === normalizedNewPrenom;
+                            return normalizedExistingNom === normalizedNewNom;
                         });
 
                         if (existingMember) {
@@ -2225,6 +2237,10 @@
                             }
                         }
                     }
+                },
+                closeSuggestions() {
+                    this.showSuggestions = false;
+                    this.memberSuggestions = [];
                 },
                 normalizeString(str) {
                     return str.normalize('NFD')
