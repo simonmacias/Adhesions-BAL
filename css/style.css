@@ -89,4 +89,188 @@ body {
 
 .dropdown-item:hover {
     background-color: var(--bg-color);
+}
+
+/* Styles spécifiques pour tablettes */
+@media (max-width: 991px) {
+    /* Ajustements généraux */
+    .container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    /* En-tête plus compact */
+    header.bg-primary {
+        padding: 1rem !important;
+    }
+
+    /* Navigation */
+    .nav-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 1rem !important;
+    }
+
+    .nav-tabs .nav-item {
+        white-space: nowrap;
+    }
+
+    /* Boutons et contrôles */
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+    }
+
+    .btn-group {
+        display: flex;
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    .btn-group .btn {
+        flex: 1;
+    }
+
+    /* Tableaux */
+    .table {
+        font-size: 0.9rem;
+    }
+
+    .table td, .table th {
+        padding: 0.75rem 0.5rem;
+    }
+
+    /* Modales */
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: 95%;
+    }
+
+    .modal-body {
+        padding: 1rem;
+    }
+
+    /* Formulaires */
+    .form-control {
+        font-size: 1rem;
+        height: calc(2.5rem + 2px);
+    }
+
+    /* Cartes statistiques */
+    .card {
+        margin-bottom: 1rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    /* Graphiques */
+    canvas {
+        max-height: 300px !important;
+    }
+
+    /* Carte */
+    #map {
+        height: 300px !important;
+    }
+
+    /* Suggestions et listes déroulantes */
+    .dropdown-menu {
+        max-height: 250px;
+        overflow-y: auto;
+    }
+
+    /* Barre de recherche */
+    .input-group {
+        margin-bottom: 1rem;
+    }
+
+    /* Ajustements pour les colonnes sur tablette */
+    @media (min-width: 768px) and (max-width: 991px) {
+        .col-md-6 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+    }
+
+    /* Amélioration de l'espacement des boutons d'action */
+    .btn-group > .btn {
+        margin-right: 0.25rem;
+    }
+
+    /* Amélioration de la lisibilité des tableaux */
+    .table-responsive {
+        border-radius: 8px;
+        box-shadow: none;
+    }
+
+    /* Ajustement des marges pour les sections */
+    .mb-4 {
+        margin-bottom: 1rem !important;
+    }
+
+    /* Amélioration de l'affichage des statistiques */
+    .statistics-card {
+        text-align: center;
+    }
+
+    .statistics-card .card-title {
+        font-size: 0.9rem;
+    }
+
+    .statistics-card .card-text {
+        font-size: 1.5rem;
+    }
+}
+
+/* Optimisations pour le mode portrait sur tablette */
+@media (max-width: 991px) and (orientation: portrait) {
+    .table td:last-child {
+        min-width: 100px;
+    }
+
+    .btn-group {
+        flex-direction: column;
+    }
+
+    .btn-group .btn {
+        margin-bottom: 0.5rem;
+        width: 100%;
+    }
+
+    .nav-tabs {
+        justify-content: flex-start;
+        padding-bottom: 0.5rem;
+    }
+}
+
+/* Optimisations pour le mode paysage sur tablette */
+@media (max-width: 991px) and (orientation: landscape) {
+    .container {
+        max-width: 95%;
+    }
+
+    .row {
+        margin-left: -10px;
+        margin-right: -10px;
+    }
+
+    .col, [class*="col-"] {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}
+
+/* Amélioration de l'accessibilité tactile */
+@media (max-width: 991px) {
+    .btn, .nav-link, .form-control, .dropdown-item {
+        min-height: 44px;
+    }
+
+    .table td, .table th {
+        min-height: 44px;
+        vertical-align: middle;
+    }
 } 
