@@ -43,7 +43,7 @@
                 <header class="bg-primary text-white py-3">
                     <div class="container d-flex justify-content-between align-items-center">
                         <h1 class="h3 mb-0">Gestion des Adhérents</h1>
-                        <span class="text-light small">v4.0.17</span>
+                        <span class="text-light small">v4.0.18</span>
                     </div>
                 </header>
 
@@ -197,7 +197,7 @@
                                                 <th>Prénom</th>
                                                 <th>Email</th>
                                                 <th>Ville</th>
-                                                <th>Formule</th>
+                                                <th>Dernière adhésion</th>
                                                 <th>Cotisation</th>
                                                 <th>Enfants</th>
                                                 <th>Actions</th>
@@ -209,7 +209,7 @@
                                                 <td>{{ member.prenom }}</td>
                                                 <td>{{ member.email }}</td>
                                                 <td>{{ member.ville }}</td>
-                                                <td>{{ member.formuleadhesion }}</td>
+                                                <td>{{ member.historique && member.historique.length > 0 ? formatDate(member.historique[0].date) : 'Jamais' }}</td>
                                                 <td>
                                                     <span :class="member.cotisationAJour ? 'badge bg-success' : 'badge bg-danger'">
                                                         {{ member.cotisationAJour ? 'À jour' : 'En retard' }}
@@ -217,8 +217,8 @@
                                                 </td>
                                                 <td>{{ member.enfants || 0 }}</td>
                                                 <td>
-                                                    <button @click="editMember(member)" class="btn btn-sm btn-outline-primary">
-                                                        <i class="bi bi-pencil"></i>
+                                                    <button @click="editMember(member)" class="btn btn-outline-primary">
+                                                        <i class="bi bi-pencil"></i> Modifier
                                                     </button>
                                                 </td>
                                             </tr>
@@ -587,6 +587,9 @@
                                     </div>
                                 </div>
                                 <div class="modal-footer">
+                                    <button v-if="isEditing" type="button" class="btn btn-danger me-auto" @click="deleteMember(currentMember)">
+                                        <i class="bi bi-trash"></i> Supprimer
+                                    </button>
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                                     <button type="button" class="btn btn-primary" @click="saveMember">Enregistrer</button>
                                 </div>
@@ -2001,7 +2004,12 @@
                     this.villeResults = []; // Vider les résultats après sélection
                 },
                 selectMember(result) {
-                    // Au lieu de copier les données, on ouvre directement le modal de modification
+                    // Fermer le modal de création si ouvert
+                    if (this.basicInfoModal) {
+                        this.basicInfoModal.hide();
+                    }
+                    
+                    // Ouvrir directement le modal de modification
                     this.editMember(result);
                     this.showSuggestions = false;
                     this.memberSuggestions = [];
