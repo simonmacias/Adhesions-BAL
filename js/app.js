@@ -19,7 +19,9 @@ const app = createApp({
             similarMembers: [],
             villeSearch: '',
             showSuggestions: false,
-            memberSuggestions: []
+            memberSuggestions: [],
+            basicInfoModal: null,
+            memberModal: null
         }
     },
     methods: {
@@ -137,9 +139,9 @@ const app = createApp({
                 email: '',
                 datenaissance: new Date().getFullYear() - 20,
                 genre: '',
-                ville: '',
-                code_postal: '',
-                coordinates: null,
+                ville: 'Ligugé',
+                code_postal: '86240',
+                coordinates: { lat: 46.5333, lon: 0.3 },
                 telephone: '',
                 dateadhesion: new Date().toISOString().split('T')[0],
                 formuleadhesion: "J'adhère",
@@ -148,7 +150,7 @@ const app = createApp({
                 cotisationAJour: true,
                 historique: []
             };
-            this.villeSearch = '';
+            this.villeSearch = 'Ligugé (86240)';
             this.modalInstance = new bootstrap.Modal(document.getElementById('memberModal'));
             this.modalInstance.show();
         },
@@ -308,6 +310,44 @@ const app = createApp({
                     }
                 }
             }
+        },
+
+        proceedToCotisation() {
+            // Valider les informations de base
+            this.formErrors = [];
+            if (!this.currentMember.nom) {
+                this.formErrors.push('Le nom est obligatoire');
+            }
+            if (!this.currentMember.prenom) {
+                this.formErrors.push('Le prénom est obligatoire');
+            }
+            
+            if (this.formErrors.length > 0) {
+                return;
+            }
+
+            // Fermer le modal des informations de base
+            this.basicInfoModal.hide();
+
+            // Compléter les informations du membre pour la cotisation
+            this.currentMember = {
+                ...this.currentMember,
+                ville: 'Ligugé',
+                code_postal: '86240',
+                coordinates: { lat: 46.5333, lon: 0.3 },
+                dateadhesion: new Date().toISOString().split('T')[0],
+                formuleadhesion: "J'adhère",
+                montantcotisation: 5,
+                enfants: 0,
+                historique: []
+            };
+            this.villeSearch = 'Ligugé (86240)';
+
+            // Ouvrir le modal de cotisation
+            if (!this.memberModal) {
+                this.memberModal = new bootstrap.Modal(document.getElementById('memberModal'));
+            }
+            this.memberModal.show();
         }
     },
     mounted() {
