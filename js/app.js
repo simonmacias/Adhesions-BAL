@@ -329,19 +329,26 @@ const app = createApp({
             // Fermer le modal des informations de base
             this.basicInfoModal.hide();
 
+            // Conserver la ville existante ou utiliser Ligugé par défaut
+            const ville = this.currentMember.ville || 'Ligugé';
+            const code_postal = this.currentMember.code_postal || '86240';
+            const coordinates = this.currentMember.coordinates || { lat: 46.5333, lon: 0.3 };
+
             // Compléter les informations du membre pour la cotisation
             this.currentMember = {
                 ...this.currentMember,
-                ville: 'Ligugé',
-                code_postal: '86240',
-                coordinates: { lat: 46.5333, lon: 0.3 },
+                ville: ville,
+                code_postal: code_postal,
+                coordinates: coordinates,
                 dateadhesion: new Date().toISOString().split('T')[0],
                 formuleadhesion: "J'adhère",
                 montantcotisation: 5,
                 enfants: 0,
                 historique: []
             };
-            this.villeSearch = 'Ligugé (86240)';
+            
+            // Mettre à jour le champ de recherche de ville si une ville est définie
+            this.villeSearch = ville && code_postal ? `${ville} (${code_postal})` : 'Ligugé (86240)';
 
             // Ouvrir le modal de cotisation
             if (!this.memberModal) {
