@@ -191,12 +191,21 @@ const app = createApp({
                 this.currentMember.historique.push(currentAdhesion);
             }
 
+            // S'assurer que toutes les propriétés requises sont présentes
+            const memberToSave = {
+                ...this.currentMember,
+                ville: this.currentMember.ville || 'Ligugé',
+                code_postal: this.currentMember.code_postal || '86240',
+                coordinates: this.currentMember.coordinates || { lat: 46.5333, lon: 0.3 },
+                cotisationAJour: true
+            };
+
             // Mettre à jour ou ajouter le membre dans la liste
-            const index = this.members.findIndex(m => m.id === this.currentMember.id);
+            const index = this.members.findIndex(m => m.id === memberToSave.id);
             if (index === -1) {
-                this.members.push({ ...this.currentMember });
+                this.members.push({ ...memberToSave });
             } else {
-                this.members[index] = { ...this.currentMember };
+                this.members[index] = { ...memberToSave };
             }
 
             // Sauvegarder les données
@@ -361,26 +370,23 @@ const app = createApp({
             // Fermer le modal des informations de base
             this.basicInfoModal.hide();
 
-            // Conserver la ville existante ou utiliser Ligugé par défaut
-            const ville = this.currentMember.ville || 'Ligugé';
-            const code_postal = this.currentMember.code_postal || '86240';
-            const coordinates = this.currentMember.coordinates || { lat: 46.5333, lon: 0.3 };
+            // Conserver les données existantes du membre
+            const existingData = { ...this.currentMember };
 
             // Compléter les informations du membre pour la cotisation
             this.currentMember = {
-                ...this.currentMember,
-                ville: ville,
-                code_postal: code_postal,
-                coordinates: coordinates,
+                ...existingData,
                 dateadhesion: new Date().toISOString().split('T')[0],
-                formuleadhesion: "J'adhère",
-                montantcotisation: 5,
-                enfants: 0,
-                historique: []
+                formuleadhesion: existingData.formuleadhesion || "J'adhère",
+                montantcotisation: existingData.montantcotisation || 5,
+                enfants: existingData.enfants || 0,
+                historique: existingData.historique || []
             };
             
             // Mettre à jour le champ de recherche de ville si une ville est définie
-            this.villeSearch = ville && code_postal ? `${ville} (${code_postal})` : 'Ligugé (86240)';
+            this.villeSearch = this.currentMember.ville && this.currentMember.code_postal ? 
+                `${this.currentMember.ville} (${this.currentMember.code_postal})` : 
+                'Ligugé (86240)';
 
             // Ouvrir le modal de cotisation
             if (!this.memberModal) {
