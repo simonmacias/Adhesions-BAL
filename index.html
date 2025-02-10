@@ -11,6 +11,7 @@
     <link href="css/style.css" rel="stylesheet">
     <style>
         #map { height: 400px; }
+        .popover { --bs-popover-max-width: 200px; }
     </style>
 </head>
 <body>
@@ -43,7 +44,7 @@
                 <header class="bg-primary text-white py-3">
                     <div class="container d-flex justify-content-between align-items-center">
                         <h1 class="h3 mb-0">Gestion des Adhérents</h1>
-                        <span class="text-light small">v4.0.27</span>
+                        <span class="text-light small">v4.0.28</span>
                     </div>
                 </header>
 
@@ -65,43 +66,20 @@
                                 <i class="bi bi-heart"></i> Bénévoles
                             </a>
                         </li>
+                        <li class="nav-item me-2">
+                            <button @click="showAddModal" class="btn btn-primary mt-1">
+                                <i class="bi bi-plus-lg"></i> Nouvel adhérent
+                            </button>
+                        </li>
                         <li class="nav-item ms-auto">
                             <div class="dropdown">
-                                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="importExportMenu" data-bs-toggle="dropdown">
-                                    <i class="bi bi-gear"></i> Import/Export
+                                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-gear"></i> Actions
                                 </button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li>
-                                        <a class="dropdown-item" href="#" @click="$refs.xlsFileInput.click()">
-                                            <i class="bi bi-upload"></i> Importer XLS
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="#" @click="$refs.jsonFileInput.click()">
-                                            <i class="bi bi-code-slash"></i> Importer JSON
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="#" @click="$refs.csvFileInput.click()">
-                                            <i class="bi bi-file-text"></i> Importer CSV
-                                        </a>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <a class="dropdown-item" href="#" @click="startExport('xls')">
-                                            <i class="bi bi-download"></i> Exporter XLS
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="#" @click="startExport('json')">
-                                            <i class="bi bi-code-slash"></i> Exporter JSON
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="#" @click="startExport('csv')">
-                                            <i class="bi bi-file-text"></i> Exporter CSV
-                                        </a>
-                                    </li>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                    <li><a class="dropdown-item" href="#">Action 1</a></li>
+                                    <li><a class="dropdown-item" href="#">Action 2</a></li>
+                                    <li><a class="dropdown-item" href="#">Action 3</a></li>
                                 </ul>
                             </div>
                         </li>
@@ -363,7 +341,7 @@
                                         </div>
                                         <!-- Ville -->
                                         <div class="col-md-6">
-                                            <label class="form-label">Ville *</label>
+                                            <label class="form-label">Ville</label>
                                             <div class="position-relative">
                                                 <input 
                                                     type="text" 
@@ -846,19 +824,39 @@
                 if (!query || query.length < 2) return []
 
                 try {
-                    const response = await fetch(
-                        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&type=municipality&limit=5`
-                    )
-                    const data = await response.json()
-                    
-                    return data.features.map(feature => ({
-                        nom: feature.properties.city,
-                        code: feature.properties.postcode,
-                        coordinates: feature.geometry.coordinates
-                    }))
+                    // Utiliser les coordonnées prédéfinies au lieu de l'API
+                    const villeCoordinates = {
+                        'Ligugé': { lat: 46.5333, lon: 0.3, code: '86240' },
+                        'Poitiers': { lat: 46.5802, lon: 0.3404, code: '86000' },
+                        'Smarves': { lat: 46.5167, lon: 0.3667, code: '86240' },
+                        'Saint-Benoit': { lat: 46.5500, lon: 0.3667, code: '86280' },
+                        'Buxerolles': { lat: 46.6000, lon: 0.3500, code: '86180' },
+                        'Iteuil': { lat: 46.4833, lon: 0.3167, code: '86240' },
+                        'Migné-Auxances': { lat: 46.6167, lon: 0.3000, code: '86440' },
+                        'Château-Larcher': { lat: 46.4167, lon: 0.3167, code: '86370' },
+                        'Vivonne': { lat: 46.4333, lon: 0.2667, code: '86370' },
+                        'Gençay': { lat: 46.3708, lon: 0.4058, code: '86160' },
+                        'Montamisé': { lat: 46.6167, lon: 0.4000, code: '86360' },
+                        'Nantes': { lat: 47.2184, lon: -1.5536, code: '44000' },
+                        'Bordeaux': { lat: 44.8378, lon: -0.5792, code: '33000' },
+                        'Paris': { lat: 48.8566, lon: 2.3522, code: '75000' },
+                        'Bruxelles': { lat: 50.8503, lon: 4.3517, code: '1000' }
+                    };
+
+                    const normalizedQuery = query.toLowerCase();
+                    const results = Object.entries(villeCoordinates)
+                        .filter(([ville]) => ville.toLowerCase().includes(normalizedQuery))
+                        .map(([ville, coords]) => ({
+                            nom: ville,
+                            code: coords.code,
+                            coordinates: [coords.lon, coords.lat]
+                        }))
+                        .slice(0, 5);
+
+                    return results;
                 } catch (error) {
-                    console.error('Erreur lors de la recherche de villes:', error)
-                    return []
+                    console.error('Erreur lors de la recherche de villes:', error);
+                    return [];
                 }
             },
 
@@ -2035,19 +2033,23 @@
                             this.villeResults = data.features.map(feature => ({
                                 nom: feature.properties.city,
                                 code: feature.properties.postcode,
-                                coordinates: feature.geometry.coordinates
+                                coordinates: [feature.geometry.coordinates[1], feature.geometry.coordinates[0]]
                             }));
                         } catch (error) {
                             console.error('Erreur lors de la recherche de ville:', error);
                             this.villeResults = [];
                         }
-                    }, 500);
+                    }, 300);
                 },
                 selectVille(result) {
                     this.currentMember.ville = result.nom;
                     this.currentMember.code_postal = result.code;
+                    this.currentMember.coordinates = {
+                        lat: result.coordinates[0],
+                        lon: result.coordinates[1]
+                    };
                     this.villeSearch = `${result.nom} (${result.code})`;
-                    this.villeResults = []; // Vider les résultats après sélection
+                    this.villeResults = [];
                 },
                 selectMember(result) {
                     // Fermer le modal de création si ouvert

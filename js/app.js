@@ -401,6 +401,70 @@ const app = createApp({
                 this.memberModal = new bootstrap.Modal(document.getElementById('memberModal'));
             }
             this.memberModal.show();
+        },
+
+        async onVilleSearch() {
+            if (!this.villeSearch || this.villeSearch.length < 2) {
+                this.searchResults = [];
+                return;
+            }
+
+            try {
+                const response = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(this.villeSearch)}&type=municipality&limit=5`);
+                const data = await response.json();
+                
+                this.searchResults = data.features.map(feature => ({
+                    ville: feature.properties.city,
+                    code_postal: feature.properties.postcode,
+                    coordinates: {
+                        lat: feature.geometry.coordinates[1],
+                        lon: feature.geometry.coordinates[0]
+                    }
+                }));
+            } catch (error) {
+                console.error('Erreur lors de la recherche de villes:', error);
+                this.searchResults = [];
+            }
+        },
+
+        selectVille(result) {
+            this.currentMember.ville = result.ville;
+            this.currentMember.code_postal = result.code_postal;
+            this.currentMember.coordinates = result.coordinates;
+            this.villeSearch = `${result.ville} (${result.code_postal})`;
+            this.searchResults = [];
+        },
+
+        validateMember() {
+            this.formErrors = [];
+            
+            // Validation des champs obligatoires
+            if (!this.currentMember.nom) {
+                this.formErrors.push('Le nom est obligatoire');
+            }
+            if (!this.currentMember.prenom) {
+                this.formErrors.push('Le prénom est obligatoire');
+            }
+            
+            // Validation de l'email si présent
+            if (this.currentMember.email && !this.validateEmail(this.currentMember.email)) {
+                this.formErrors.push('L\'email n\'est pas valide');
+            }
+            
+            // Validation de la date de naissance
+            if (this.currentMember.datenaissance) {
+                const annee = parseInt(this.currentMember.datenaissance);
+                if (isNaN(annee) || annee < 1900 || annee > this.currentYear) {
+                    this.formErrors.push('L\'année de naissance n\'est pas valide');
+                }
+            }
+            
+            // Validation du nombre d'enfants
+            if (this.currentMember.enfants < 0) {
+                this.formErrors.push('Le nombre d\'enfants ne peut pas être négatif');
+            }
+            
+            return this.formErrors.length === 0;
         }
     },
     mounted() {
