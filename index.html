@@ -43,7 +43,7 @@
                 <header class="bg-primary text-white py-3">
                     <div class="container d-flex justify-content-between align-items-center">
                         <h1 class="h3 mb-0">Gestion des Adhérents</h1>
-                        <span class="text-light small">v4.0.12</span>
+                        <span class="text-light small">v4.0.13</span>
                     </div>
                 </header>
 
@@ -217,11 +217,8 @@
                                                 </td>
                                                 <td>{{ member.enfants || 0 }}</td>
                                                 <td>
-                                                    <button @click="editMember(member)" class="btn btn-sm btn-outline-primary me-1">
+                                                    <button @click="editMember(member)" class="btn btn-sm btn-outline-primary">
                                                         <i class="bi bi-pencil"></i>
-                                                    </button>
-                                                    <button @click="deleteMember(member)" class="btn btn-sm btn-outline-danger">
-                                                        <i class="bi bi-trash"></i>
                                                     </button>
                                                 </td>
                                             </tr>
@@ -299,17 +296,88 @@
                         </div>
                     </div>
 
-                    <!-- Modal pour ajout/modification -->
-                    <div class="modal fade" id="memberModal" tabindex="-1" aria-labelledby="memberModalLabel" aria-hidden="true">
+                    <!-- Modal pour la première étape (informations de base) -->
+                    <div class="modal fade" id="memberBasicInfoModal" tabindex="-1">
                         <div class="modal-dialog">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title" id="memberModalLabel">
-                                        {{ currentMember?.id ? 'Modifier' : 'Ajouter' }} un adhérent
-                                    </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <h5 class="modal-title">Nouvel adhérent - A remplir par l'adhérent</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
-                                <div class="modal-body" v-if="currentMember">
+                                <div class="modal-body">
+                                    <div class="row g-3">
+                                        <!-- Nom -->
+                                        <div class="col-md-6">
+                                            <label class="form-label">Nom *</label>
+                                            <input type="text" 
+                                                   class="form-control"
+                                                   :class="{ 'is-invalid': formErrors.includes('Le nom est obligatoire') }"
+                                                   v-model="currentMember.nom"
+                                                   @input="onMemberInfoChange('nom')"
+                                                   @blur="currentMember.nom = currentMember.nom.toUpperCase()">
+                                            <!-- Liste des suggestions -->
+                                            <div v-if="showSuggestions && memberSuggestions.length" 
+                                                 class="position-absolute w-100 mt-1 bg-white border rounded shadow-sm" 
+                                                 style="z-index: 1000; max-height: 200px; overflow-y: auto;">
+                                                <div v-for="member in memberSuggestions" 
+                                                     :key="member.id"
+                                                     class="dropdown-item py-2 px-3 cursor-pointer"
+                                                     @click="editMember(member)">
+                                                    <strong>{{ member.nom }} {{ member.prenom }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ member.ville }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Prénom -->
+                                        <div class="col-md-6">
+                                            <label class="form-label">Prénom *</label>
+                                            <input type="text" 
+                                                   class="form-control"
+                                                   :class="{ 'is-invalid': formErrors.includes('Le prénom est obligatoire') }"
+                                                   v-model="currentMember.prenom"
+                                                   @input="onMemberInfoChange('prenom')"
+                                                   @blur="currentMember.prenom = currentMember.prenom.charAt(0).toUpperCase() + currentMember.prenom.slice(1).toLowerCase()">
+                                        </div>
+                                        <!-- Email -->
+                                        <div class="col-md-6">
+                                            <label class="form-label">Email</label>
+                                            <input type="email" class="form-control" v-model="currentMember.email">
+                                        </div>
+                                        <!-- Téléphone -->
+                                        <div class="col-md-6">
+                                            <label class="form-label">Téléphone</label>
+                                            <input type="tel" class="form-control" v-model="currentMember.telephone">
+                                        </div>
+                                        <!-- Date de naissance -->
+                                        <div class="col-md-6">
+                                            <label class="form-label">Année de naissance</label>
+                                            <input type="number" 
+                                                   class="form-control" 
+                                                   v-model.number="currentMember.datenaissance"
+                                                   :min="1900" 
+                                                   :max="currentYear"
+                                                   placeholder="AAAA">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                    <button type="button" class="btn btn-primary" @click="proceedToCotisation">Suivant</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal pour la cotisation (modification du modal existant) -->
+                    <div class="modal fade" id="memberModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">{{ isEditing ? 'Modifier' : 'Cotisation' }} - {{ currentMember?.nom }} {{ currentMember?.prenom }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
                                     <!-- Affichage des erreurs -->
                                     <div v-if="formErrors.length" class="alert alert-danger mb-3">
                                         <h6 class="alert-heading">Erreurs à corriger :</h6>
@@ -439,7 +507,7 @@
                                             <small class="form-text text-muted">Modifiable si besoin</small>
                                         </div>
                                         <div class="col-md-6">
-                                            <label class="form-label">Nombre d'enfants</label>
+                                            <label class="form-label">Nombre d'enfants (+1€)</label>
                                             <input type="number" class="form-control" v-model.number="currentMember.enfants" min="0">
                                         </div>
 
@@ -837,6 +905,9 @@
                     periodModalInstance: null,
                     showSuggestions: false,
                     memberSuggestions: [],
+                    isEditing: false,
+                    basicInfoModal: null,
+                    memberModal: null,
                 }
             },
             mounted() {
@@ -1030,7 +1101,8 @@
                     if (confirm('Êtes-vous sûr de vouloir supprimer cet adhérent ?')) {
                         try {
                             await dataService.deleteMember(member.id);
-                            await this.loadData(); // Recharger les données
+                            this.memberModal.hide();
+                            await this.loadData();
                         } catch (error) {
                             console.error('Erreur lors de la suppression:', error);
                             alert('Erreur lors de la suppression. Veuillez réessayer.');
@@ -1452,6 +1524,7 @@
                     this.formErrors = [];
                     this.searchResults = [];
                     this.similarMembers = [];
+                    this.isEditing = true;
                     
                     this.currentMember = { ...member };
                     this.villeSearch = member.ville && member.code_postal ? `${member.ville} (${member.code_postal})` : '';
@@ -1461,8 +1534,11 @@
                     backdrops.forEach(backdrop => backdrop.remove());
                     document.body.classList.remove('modal-open');
                     
-                    this.modalInstance = new bootstrap.Modal(document.getElementById('memberModal'));
-                    this.modalInstance.show();
+                    // Ouvrir directement le modal de cotisation en mode édition
+                    if (!this.memberModal) {
+                        this.memberModal = new bootstrap.Modal(document.getElementById('memberModal'));
+                    }
+                    this.memberModal.show();
                 },
                 async saveMember() {
                     if (!this.validateMember()) {
@@ -1492,7 +1568,7 @@
                     try {
                         await dataService.saveMember(this.currentMember);
                         await this.loadData();
-                        this.modalInstance.hide();
+                        this.memberModal.hide();
                         
                         if (this.activeTab === 'stats') {
                             this.$nextTick(() => this.updateCharts());
@@ -1507,28 +1583,58 @@
                     this.formErrors = [];
                     this.searchResults = [];
                     this.similarMembers = [];
+                    this.isEditing = false;
                     
+                    // Initialiser un nouveau membre avec seulement les champs de base
                     this.currentMember = {
                         id: null,
                         nom: '',
                         prenom: '',
                         email: '',
                         datenaissance: new Date().getFullYear() - 20,
-                        genre: '',
+                        telephone: ''
+                    };
+
+                    // Afficher le modal des informations de base
+                    if (!this.basicInfoModal) {
+                        this.basicInfoModal = new bootstrap.Modal(document.getElementById('memberBasicInfoModal'));
+                    }
+                    this.basicInfoModal.show();
+                },
+                proceedToCotisation() {
+                    // Valider les informations de base
+                    this.formErrors = [];
+                    if (!this.currentMember.nom) {
+                        this.formErrors.push('Le nom est obligatoire');
+                    }
+                    if (!this.currentMember.prenom) {
+                        this.formErrors.push('Le prénom est obligatoire');
+                    }
+                    
+                    if (this.formErrors.length > 0) {
+                        return;
+                    }
+
+                    // Fermer le modal des informations de base
+                    this.basicInfoModal.hide();
+
+                    // Compléter les informations du membre pour la cotisation
+                    this.currentMember = {
+                        ...this.currentMember,
                         ville: '',
                         code_postal: '',
-                        coordinates: null,
-                        telephone: '',
                         dateadhesion: new Date().toISOString().split('T')[0],
                         formuleadhesion: "J'adhère",
                         montantcotisation: 5,
                         enfants: 0,
-                        cotisationAJour: true,
-                        historique: [] // Historique vide à la création
+                        historique: []
                     };
-                    this.villeSearch = '';
-                    this.modalInstance = new bootstrap.Modal(document.getElementById('memberModal'));
-                    this.modalInstance.show();
+
+                    // Ouvrir le modal de cotisation
+                    if (!this.memberModal) {
+                        this.memberModal = new bootstrap.Modal(document.getElementById('memberModal'));
+                    }
+                    this.memberModal.show();
                 },
                 updateMontantCotisation() {
                     const montants = {
