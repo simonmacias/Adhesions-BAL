@@ -43,7 +43,7 @@
                 <header class="bg-primary text-white py-3">
                     <div class="container d-flex justify-content-between align-items-center">
                         <h1 class="h3 mb-0">Gestion des Adhérents</h1>
-                        <span class="text-light small">v4.0.13</span>
+                        <span class="text-light small">v4.0.15</span>
                     </div>
                 </header>
 
@@ -842,6 +842,15 @@
                         { label: 'Nouveaux (2024)', value: 0 },
                         { label: 'Taux renouvellement', value: '0%' }
                     ],
+                    currentMember: {
+                        id: null,
+                        nom: '',
+                        prenom: '',
+                        email: '',
+                        datenaissance: new Date().getFullYear() - 20,
+                        telephone: '',
+                        historique: []
+                    },
                     villeCoordinates: {
                         'Ligugé': { lat: 46.5333, lon: 0.3, code: '86240' },
                         'Poitiers': { lat: 46.5802, lon: 0.3404, code: '86000' },
@@ -874,7 +883,6 @@
                         'Valdivienne': { lat: 46.5167, lon: 0.5833, code: '86300' },
                         "L'Alpe d'Huez": { lat: 45.0922, lon: 6.0677, code: '38750' }
                     },
-                    currentMember: null,
                     modalInstance: null,
                     searchQuery: '',
                     activeFilter: 'tous',
@@ -1059,6 +1067,17 @@
                     try {
                         const data = await dataService.loadMembers();
                         this.members = data.map(this.migrateOldData);
+                        if (!this.currentMember) {
+                            this.currentMember = {
+                                id: null,
+                                nom: '',
+                                prenom: '',
+                                email: '',
+                                datenaissance: new Date().getFullYear() - 20,
+                                telephone: '',
+                                historique: []
+                            };
+                        }
                         this.updateStatistics();
                         if (this.activeTab === 'stats') {
                             this.$nextTick(() => {
