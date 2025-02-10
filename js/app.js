@@ -21,7 +21,8 @@ const app = createApp({
             showSuggestions: false,
             memberSuggestions: [],
             basicInfoModal: null,
-            memberModal: null
+            memberModal: null,
+            isEditing: false
         }
     },
     methods: {
@@ -131,28 +132,35 @@ const app = createApp({
             this.formErrors = [];
             this.searchResults = [];
             this.similarMembers = [];
+            this.isEditing = false;
             
+            // Initialiser un nouveau membre avec tous les champs nécessaires
             this.currentMember = {
                 id: null,
                 nom: '',
                 prenom: '',
                 email: '',
                 datenaissance: new Date().getFullYear() - 20,
-                genre: '',
+                telephone: '',
                 ville: 'Ligugé',
                 code_postal: '86240',
                 coordinates: { lat: 46.5333, lon: 0.3 },
-                telephone: '',
+                genre: '',
                 dateadhesion: new Date().toISOString().split('T')[0],
                 formuleadhesion: "J'adhère",
                 montantcotisation: 5,
                 enfants: 0,
-                cotisationAJour: true,
                 historique: []
             };
+
+            // Initialiser la recherche de ville
             this.villeSearch = 'Ligugé (86240)';
-            this.modalInstance = new bootstrap.Modal(document.getElementById('memberModal'));
-            this.modalInstance.show();
+
+            // Afficher le modal des informations de base
+            if (!this.basicInfoModal) {
+                this.basicInfoModal = new bootstrap.Modal(document.getElementById('memberBasicInfoModal'));
+            }
+            this.basicInfoModal.show();
         },
 
         editMember(member) {
