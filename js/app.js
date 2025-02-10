@@ -162,14 +162,46 @@ const app = createApp({
         },
 
         saveMember() {
-            const index = this.members.findIndex(m => m.id === this.currentMember.id)
-            if (index === -1) {
-                this.members.push(this.currentMember)
-            } else {
-                this.members[index] = this.currentMember
+            // Générer un ID unique si c'est un nouveau membre
+            if (!this.currentMember.id) {
+                this.currentMember.id = Date.now() + Math.random();
             }
-            this.saveData()
-            this.modalInstance.hide()
+
+            // S'assurer que les coordonnées sont présentes
+            if (!this.currentMember.coordinates && this.currentMember.ville === 'Ligugé') {
+                this.currentMember.coordinates = { lat: 46.5333, lon: 0.3 };
+            }
+
+            // S'assurer que l'historique est un tableau
+            if (!Array.isArray(this.currentMember.historique)) {
+                this.currentMember.historique = [];
+            }
+
+            // Ajouter l'adhésion actuelle à l'historique si ce n'est pas déjà fait
+            const currentAdhesion = {
+                date: this.currentMember.dateadhesion,
+                formule: this.currentMember.formuleadhesion,
+                montant: this.currentMember.montantcotisation
+            };
+
+            if (!this.currentMember.historique.some(h => 
+                h.date === currentAdhesion.date && 
+                h.formule === currentAdhesion.formule && 
+                h.montant === currentAdhesion.montant)) {
+                this.currentMember.historique.push(currentAdhesion);
+            }
+
+            // Mettre à jour ou ajouter le membre dans la liste
+            const index = this.members.findIndex(m => m.id === this.currentMember.id);
+            if (index === -1) {
+                this.members.push({ ...this.currentMember });
+            } else {
+                this.members[index] = { ...this.currentMember };
+            }
+
+            // Sauvegarder les données
+            this.saveData();
+            this.modalInstance.hide();
         },
 
         deleteMember(member) {
