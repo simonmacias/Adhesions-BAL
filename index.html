@@ -43,7 +43,7 @@
                 <header class="bg-primary text-white py-3">
                     <div class="container d-flex justify-content-between align-items-center">
                         <h1 class="h3 mb-0">Gestion des Adhérents</h1>
-                        <span class="text-light small">v4.0.18</span>
+                        <span class="text-light small">v4.0.19</span>
                     </div>
                 </header>
 
@@ -324,16 +324,25 @@
                                             <!-- Liste déroulante des suggestions (uniquement en mode ajout) -->
                                             <div v-if="!isEditing && showSuggestions && memberSuggestions.length > 0" 
                                                  class="dropdown-menu show position-absolute w-100" 
-                                                 style="z-index: 1000;">
-                                                <a v-for="member in memberSuggestions" 
-                                                   class="dropdown-item cursor-pointer"
+                                                 style="z-index: 1000; max-height: 300px; overflow-y: auto;">
+                                                <div v-for="member in memberSuggestions" 
+                                                   class="dropdown-item py-3 px-4 cursor-pointer hover-bg-light"
+                                                   style="font-size: 1.1em;"
                                                    @click="selectMember(member)">
-                                                    {{ member.nom }} {{ member.prenom }}
-                                                </a>
+                                                    <div class="d-flex flex-column">
+                                                        <strong>{{ member.nom }} {{ member.prenom }}</strong>
+                                                        <small class="text-muted mt-1">
+                                                            <i class="bi bi-geo-alt"></i> {{ member.ville || 'Ville non renseignée' }}
+                                                            <span v-if="member.email" class="ms-2">
+                                                                <i class="bi bi-envelope"></i> {{ member.email }}
+                                                            </span>
+                                                        </small>
+                                                    </div>
+                                                </div>
                                                 <div class="dropdown-divider"></div>
-                                                <a class="dropdown-item text-danger cursor-pointer" 
+                                                <a class="dropdown-item text-danger py-2 cursor-pointer" 
                                                    @click="closeSuggestions">
-                                                    Fermer la liste
+                                                    <i class="bi bi-x-circle"></i> Fermer la liste
                                                 </a>
                                             </div>
                                         </div>
@@ -349,12 +358,36 @@
                                                 <option value="">Sélectionnez...</option>
                                                 <option value="F">Femme</option>
                                                 <option value="H">Homme</option>
+                                                <option value="A">Autre</option>
                                             </select>
                                         </div>
                                         <!-- Ville -->
                                         <div class="col-md-6">
                                             <label class="form-label">Ville *</label>
-                                            <input type="text" class="form-control" v-model="currentMember.ville" required>
+                                            <div class="position-relative">
+                                                <input 
+                                                    type="text" 
+                                                    class="form-control" 
+                                                    v-model="villeSearch"
+                                                    @input="searchVilles"
+                                                    placeholder="Rechercher une ville..."
+                                                >
+                                                <div v-if="villeResults.length" class="position-absolute w-100 mt-1 bg-white border rounded shadow-sm" style="z-index: 1000; max-height: 200px; overflow-y: auto;">
+                                                    <button 
+                                                        v-for="result in villeResults" 
+                                                        :key="result.code"
+                                                        class="dropdown-item py-2 text-start w-100"
+                                                        @click="selectVille(result)"
+                                                    >
+                                                        {{ result.nom }} ({{ result.code }})
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div v-if="currentMember.ville" class="mt-2">
+                                                <small class="text-muted">
+                                                    {{ currentMember.ville }} - {{ currentMember.code_postal }}
+                                                </small>
+                                            </div>
                                         </div>
                                         <!-- Email -->
                                         <div class="col-md-6">
@@ -2209,7 +2242,7 @@
                     }
 
                     // Recherche de suggestions uniquement sur le nom de famille
-                    const searchTerm = this.currentMember.nom;
+                    const searchTerm = this.currentMember.nom.trim();
                     const normalizedSearch = this.normalizeString(searchTerm);
                     
                     this.memberSuggestions = this.members.filter(member => {
@@ -2220,9 +2253,11 @@
                             return false;
                         }
                         
-                        // Vérifier uniquement le nom de famille
-                        return normalizedNom.includes(normalizedSearch);
-                    }).slice(0, 5); // Limite à 5 suggestions
+                        // Vérifier que le nom commence par le terme recherché
+                        return normalizedNom.startsWith(normalizedSearch);
+                    })
+                    .sort((a, b) => a.nom.localeCompare(b.nom)) // Trier par ordre alphabétique
+                    .slice(0, 8); // Augmenter la limite à 8 suggestions
 
                     this.showSuggestions = this.memberSuggestions.length > 0;
 
