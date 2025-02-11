@@ -44,7 +44,7 @@
                 <header class="bg-primary text-white py-3">
                     <div class="container d-flex justify-content-between align-items-center">
                         <h1 class="h3 mb-0">Gestion des Adhérents</h1>
-                        <span class="text-light small">v4.0.28</span>
+                        <span class="text-light small">v4.0.29</span>
                     </div>
                 </header>
 
@@ -66,20 +66,49 @@
                                 <i class="bi bi-heart"></i> Bénévoles
                             </a>
                         </li>
-                        <li class="nav-item me-2">
-                            <button @click="showAddModal" class="btn btn-primary mt-1">
-                                <i class="bi bi-plus-lg"></i> Nouvel adhérent
-                            </button>
-                        </li>
                         <li class="nav-item ms-auto">
                             <div class="dropdown">
                                 <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="bi bi-gear"></i> Actions
                                 </button>
                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                    <li><a class="dropdown-item" href="#">Action 1</a></li>
-                                    <li><a class="dropdown-item" href="#">Action 2</a></li>
-                                    <li><a class="dropdown-item" href="#">Action 3</a></li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" @click="startExport('xls')">
+                                            <i class="bi bi-file-earmark-excel"></i> Export XLS
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" @click="startExport('json')">
+                                            <i class="bi bi-file-earmark-text"></i> Export JSON
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" @click="startExport('csv')">
+                                            <i class="bi bi-file-earmark-text"></i> Export CSV
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" @click="$refs.xlsFileInput.click()">
+                                            <i class="bi bi-file-earmark-excel"></i> Import XLS
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" @click="$refs.jsonFileInput.click()">
+                                            <i class="bi bi-file-earmark-text"></i> Import JSON
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" @click="$refs.csvFileInput.click()">
+                                            <i class="bi bi-file-earmark-text"></i> Import CSV
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" @click="syncHelloAsso">
+                                            <i class="bi bi-cloud-download"></i> Synchroniser HelloAsso
+                                        </a>
+                                    </li>
                                 </ul>
                             </div>
                         </li>
@@ -657,6 +686,72 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                    <!-- Tutoriels -->
+                                    <div class="row mt-4">
+                                        <div class="col-md-6">
+                                            <div class="card">
+                                                <div class="card-header bg-primary text-white">
+                                                    <h6 class="mb-0">Tutoriel : Ajouter un nouvel adhérent</h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <ol class="list-group list-group-numbered">
+                                                        <li class="list-group-item">Cliquer sur l'onglet "Adhérents" en haut de la page</li>
+                                                        <li class="list-group-item">Cliquer sur le bouton "Nouvel adhérent"</li>
+                                                        <li class="list-group-item">Remplir les informations de base :
+                                                            <ul class="mt-2">
+                                                                <li>Nom et prénom (obligatoires)</li>
+                                                                <li>Genre</li>
+                                                                <li>Ville (utiliser la recherche automatique)</li>
+                                                                <li>Email</li>
+                                                                <li>Téléphone</li>
+                                                                <li>Année de naissance</li>
+                                                            </ul>
+                                                        </li>
+                                                        <li class="list-group-item">Cliquer sur "Suivant" pour passer à la cotisation</li>
+                                                        <li class="list-group-item">Dans l'écran de cotisation :
+                                                            <ul class="mt-2">
+                                                                <li>Sélectionner la formule d'adhésion</li>
+                                                                <li>Vérifier/ajuster le montant</li>
+                                                                <li>Ajouter le nombre d'enfants si nécessaire</li>
+                                                            </ul>
+                                                        </li>
+                                                        <li class="list-group-item">Cliquer sur "Enregistrer" pour finaliser l'adhésion</li>
+                                                    </ol>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card">
+                                                <div class="card-header bg-success text-white">
+                                                    <h6 class="mb-0">Tutoriel : Ajouter une cotisation à un adhérent existant</h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <ol class="list-group list-group-numbered">
+                                                        <li class="list-group-item">Dans l'onglet "Adhérents", rechercher l'adhérent :
+                                                            <ul class="mt-2">
+                                                                <li>Utiliser la barre de recherche en haut</li>
+                                                                <li>Ou parcourir la liste des adhérents</li>
+                                                            </ul>
+                                                        </li>
+                                                        <li class="list-group-item">Cliquer sur le bouton "Modifier" à droite de l'adhérent</li>
+                                                        <li class="list-group-item">Dans la section "Historique des adhésions" :
+                                                            <ul class="mt-2">
+                                                                <li>Cliquer sur "Nouvelle adhésion"</li>
+                                                                <li>La date du jour est automatiquement renseignée</li>
+                                                                <li>Le montant est calculé selon la formule choisie</li>
+                                                            </ul>
+                                                        </li>
+                                                        <li class="list-group-item">Vérifier les informations de l'adhérent et les mettre à jour si nécessaire</li>
+                                                        <li class="list-group-item">Cliquer sur "Enregistrer" pour valider la nouvelle cotisation</li>
+                                                    </ol>
+                                                    <div class="alert alert-info mt-3">
+                                                        <i class="bi bi-info-circle"></i> Note : L'historique des adhésions est automatiquement trié par date, avec la plus récente en premier.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -702,14 +797,99 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.2/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dotenv@10.0.0/lib/main.min.js"></script>
     
-    <!-- Notre application -->
+    <!-- Configuration -->
     <script type="module">
-        // Configuration Supabase
-        const supabaseUrl = 'https://wetwafvvzwqtjmtfzmap.supabase.co'
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndldHdhZnZ2endxdGptdGZ6bWFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg2ODM1NjEsImV4cCI6MjA1NDI1OTU2MX0.fuUDGoJgOIoAiaOyof1hCIEQpkmCJfm2Vt2KAkAg3Iw'
-        const { createClient } = supabase
-        const supabaseClient = createClient(supabaseUrl, supabaseKey)
+        import config from './js/config.js';
+        
+        // Configuration HelloAsso
+        const helloAssoService = {
+            // Clés d'API HelloAsso (décodées depuis la configuration)
+            clientId: config.decode(config.helloasso.clientId),
+            clientSecret: config.decode(config.helloasso.clientSecret),
+            organizationSlug: config.decode(config.helloasso.orgSlug),
+
+            // Obtenir un token d'accès
+            async getAccessToken() {
+                try {
+                    const response = await fetch('https://api.helloasso.com/oauth2/token', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams({
+                            grant_type: 'client_credentials',
+                            client_id: this.clientId,
+                            client_secret: this.clientSecret
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Erreur lors de l\'authentification HelloAsso');
+                    }
+
+                    const data = await response.json();
+                    return data.access_token;
+                } catch (error) {
+                    console.error('Erreur HelloAsso:', error);
+                    throw error;
+                }
+            },
+
+            // Récupérer les adhésions récentes
+            async getRecentAdhesions() {
+                try {
+                    const token = await this.getAccessToken();
+                    const response = await fetch(
+                        `https://api.helloasso.com/v5/organizations/${this.organizationSlug}/forms/Membership/adhesions`,
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        }
+                    );
+
+                    if (!response.ok) {
+                        throw new Error('Erreur lors de la récupération des adhésions');
+                    }
+
+                    const data = await response.json();
+                    return data.data || [];
+                } catch (error) {
+                    console.error('Erreur lors de la récupération des adhésions:', error);
+                    throw error;
+                }
+            },
+
+            // Convertir une adhésion HelloAsso en format compatible
+            convertAdhesion(helloAssoAdhesion) {
+                return {
+                    nom: helloAssoAdhesion.payer.lastName,
+                    prenom: helloAssoAdhesion.payer.firstName,
+                    email: helloAssoAdhesion.payer.email,
+                    dateadhesion: helloAssoAdhesion.date.split('T')[0],
+                    formuleadhesion: this.mapFormule(helloAssoAdhesion.formSlug),
+                    montantcotisation: helloAssoAdhesion.amount / 100, // HelloAsso utilise les centimes
+                    historique: [{
+                        date: helloAssoAdhesion.date.split('T')[0],
+                        formule: this.mapFormule(helloAssoAdhesion.formSlug),
+                        montant: helloAssoAdhesion.amount / 100
+                    }]
+                };
+            },
+
+            // Mapper les formules HelloAsso vers nos formules
+            mapFormule(formSlug) {
+                const formuleMapping = {
+                    'jadhere': "J'adhère",
+                    'jadore': "J'adore",
+                    'jaccelere': "J'accélère",
+                    'passage': "Passage"
+                };
+                return formuleMapping[formSlug] || "J'adhère";
+            }
+        };
 
         // Service de données
         const dataService = {
@@ -874,6 +1054,49 @@
                 } catch (error) {
                     console.error('Erreur lors de la récupération du hash:', error)
                     return null
+                }
+            },
+
+            // Ajouter la méthode de synchronisation HelloAsso au dataService
+            async syncHelloAssoAdhesions() {
+                try {
+                    const adhesions = await helloAssoService.getRecentAdhesions();
+                    let newCount = 0;
+                    let updateCount = 0;
+
+                    for (const adhesion of adhesions) {
+                        const memberData = helloAssoService.convertAdhesion(adhesion);
+                        
+                        // Vérifier si le membre existe déjà
+                        const { data: existingMembers } = await supabaseClient
+                            .from('members')
+                            .select('*')
+                            .eq('email', memberData.email)
+                            .single();
+
+                        if (existingMembers) {
+                            // Mettre à jour l'historique si l'adhésion n'existe pas déjà
+                            const adhesionExists = existingMembers.historique.some(h => 
+                                h.date === memberData.historique[0].date &&
+                                h.montant === memberData.historique[0].montant
+                            );
+
+                            if (!adhesionExists) {
+                                existingMembers.historique.push(memberData.historique[0]);
+                                await this.saveMember(existingMembers);
+                                updateCount++;
+                            }
+                        } else {
+                            // Créer un nouveau membre
+                            await this.saveMember(memberData);
+                            newCount++;
+                        }
+                    }
+
+                    return { newCount, updateCount };
+                } catch (error) {
+                    console.error('Erreur lors de la synchronisation HelloAsso:', error);
+                    throw error;
                 }
             }
         }
@@ -2305,6 +2528,17 @@
                         .replace(/[\u0300-\u036f]/g, '')
                         .toLowerCase()
                         .replace(/[^a-z]/g, '');
+                },
+                // Ajouter la méthode de synchronisation dans les méthodes Vue
+                async syncHelloAsso() {
+                    try {
+                        const result = await dataService.syncHelloAssoAdhesions();
+                        alert(`Synchronisation terminée:\n${result.newCount} nouveaux membres\n${result.updateCount} mises à jour`);
+                        await this.loadData();
+                    } catch (error) {
+                        console.error('Erreur lors de la synchronisation:', error);
+                        alert('Erreur lors de la synchronisation avec HelloAsso');
+                    }
                 }
             }
         })
