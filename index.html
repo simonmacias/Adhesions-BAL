@@ -44,7 +44,7 @@
                 <header class="bg-primary text-white py-3">
                     <div class="container d-flex justify-content-between align-items-center">
                         <h1 class="h3 mb-0">Gestion des Adhérents</h1>
-                        <span class="text-light small">v4.0.30</span>
+                        <span class="text-light small">v4.0.31</span>
                     </div>
                 </header>
 
@@ -800,8 +800,14 @@
     
     <!-- Configuration -->
     <script type="module">
-        import config from './js/config.js';
-        
+        import { createClient } from 'https://esm.sh/@supabase/supabase-js'
+        import config from './js/config.js'
+
+        // Configuration Supabase
+        const supabaseUrl = 'https://wetwafvvzwqtjmtfzmap.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndldHdhZnZ2endxdGptdGZ6bWFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg2ODM1NjEsImV4cCI6MjA1NDI1OTU2MX0.fuUDGoJgOIoAiaOyof1hCIEQpkmCJfm2Vt2KAkAg3Iw'
+        const supabaseClient = createClient(supabaseUrl, supabaseKey)
+
         // Configuration HelloAsso
         const helloAssoService = {
             // Clés d'API HelloAsso (décodées depuis la configuration)

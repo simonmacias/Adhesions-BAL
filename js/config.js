@@ -2,9 +2,9 @@
 const config = {
     // Identifiants HelloAsso encodés en base64
     helloasso: {
-        clientId: 'SGVsbG9Bc3NvQ2xpZW50SUQ=', // À remplacer par votre clientId encodé
-        clientSecret: 'SGVsbG9Bc3NvU2VjcmV0', // À remplacer par votre clientSecret encodé
-        orgSlug: 'QkFMX09yZ2FuaXphdGlvbg==' // À remplacer par votre slug d'organisation encodé
+        clientId: 'MGQ4N2UyYjNiYzcyNDg4ZjgxYmEzNGFiZWJjNDNmYmE=',
+        clientSecret: 'MC9WRnBsenBWeEFFbjkzR0xBL3FUK1doS1NWL3FLN2I=',
+        orgSlug: 'bGUtY2FmZS1kZS1saWd1Z2U='
     },
 
     // Fonction pour décoder les valeurs en base64
